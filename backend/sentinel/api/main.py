@@ -1,23 +1,8 @@
-"""Sentinel API: healthz + MVP demo router."""
-
-import asyncio
-from contextlib import asynccontextmanager
+"""Placeholder API so the image starts; Phase 6 replaces this with the real app."""
 
 from fastapi import FastAPI
 
-from sentinel.mvp.engine import engine
-from sentinel.mvp.router import router
-
-
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    task = asyncio.create_task(engine().ticker())
-    yield
-    task.cancel()
-
-
-app = FastAPI(title="sentinel-api", lifespan=lifespan)
-app.include_router(router)
+app = FastAPI(title="sentinel-api")
 
 
 @app.get("/healthz")
