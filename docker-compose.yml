@@ -10,13 +10,13 @@ services:
   sentinel-api:
     <<: *hardening
     build: { context: ., dockerfile: backend/Dockerfile }
-    ports: ["8080:8080"]
+    ports: ["127.0.0.1:8080:8080"]
     env_file: [{ path: .env, required: false }]
     environment:
       PORT: "8080"
       SIM_BASE_URL: http://finpay-sim:8081
     depends_on: [finpay-sim]
-    healthcheck:   # /healthz arrives in Phase 6
+    healthcheck:   # placeholder /healthz now; Phase 6 replaces the app
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8080/healthz', timeout=2)"]
       interval: 10s
       timeout: 3s
@@ -25,19 +25,18 @@ services:
   finpay-sim:
     <<: *hardening
     build: { context: ., dockerfile: sim/Dockerfile }
-    ports: ["8081:8081"]
-    env_file: [{ path: .env, required: false }]
+    ports: ["127.0.0.1:8081:8081"]
     environment:
       PORT: "8081"
       EMIT_MODE: http
+      SIM_ADMIN_TOKEN: ${SIM_ADMIN_TOKEN:-dev-sim-token}
       SENTINEL_INGEST_URL: http://sentinel-api:8080/ingest
-    # Phase 5 adds the sim's /healthz.
+    # Phase 5 replaces the placeholder app.
 
   sentinel-web:
     <<: *hardening
     build: { context: ., dockerfile: frontend/Dockerfile }
-    ports: ["3000:3000"]
-    env_file: [{ path: .env, required: false }]
+    ports: ["127.0.0.1:3000:3000"]
     environment:
       PORT: "3000"
       API_INTERNAL_URL: http://sentinel-api:8080

@@ -69,11 +69,19 @@ def main(argv=None):
     pdir = Path(args.root) / args.phase
     optional = set(entry.get("optional_flows", []))
     rows, missing = [], []
+    # Keep hand-written "What it proves" text from a previous run.
+    kept = {}
+    prev = pdir / "REPORT.md"
+    if prev.exists():
+        for line in prev.read_text().splitlines():
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) == 3 and cells[2] not in ("", "<fill in>", "What it proves", "---", "skipped"):
+                kept[cells[0]] = cells[2]
     for flow in entry["evidence_flows"]:
         pngs = sorted((pdir / flow).glob("*.png")) if (pdir / flow).is_dir() else []
         if pngs:
             names = ", ".join(p.name for p in pngs)
-            rows.append(f"| {flow} | {len(pngs)}: {names} | <fill in> |")
+            rows.append(f"| {flow} | {len(pngs)}: {names} | {kept.get(flow, "<fill in>")} |")
         elif flow in optional:
             rows.append(f"| {flow} | none (optional, skipped) | skipped |")
         else:

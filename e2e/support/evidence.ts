@@ -38,7 +38,7 @@ function key(info: ShotInfo): string {
 }
 
 function evidenceEnabled(): boolean {
-  return process.env.EVIDENCE_DISABLED !== '1';
+  return process.env.EVIDENCE_DISABLED !== '1' && process.env.EVIDENCE_PHASE !== 'regression';
 }
 
 export async function shot(page: ShotPage, info: ShotInfo, idx: number, step: string): Promise<string> {

@@ -11,6 +11,7 @@ SLUG=$(uv run python -c "import json,sys;print(json.load(open('scripts/phases.js
 PHASE_ID="phase-${PHASE}-${SLUG}"
 export EVIDENCE_PHASE="$PHASE_ID"
 export LLM_PROVIDER="${LLM_PROVIDER:-scripted}"
+export REPORT_HTML="${REPORT_HTML:-test-evidence/$PHASE_ID/reports/pytest.html}"
 
 RESULTS=()
 FAILED=0
@@ -41,9 +42,11 @@ else skip "1 e2e static" "e2e not installed (make setup)"; fi
 # 2. Full regression (all phases so far)
 if have pyproject.toml; then
   mkdir -p "test-evidence/$PHASE_ID/reports"
-  step "2 pytest unit (no network)" uv run pytest -m unit --disable-socket --allow-unix-socket
-  step "2 pytest integration + e2e_http" uv run pytest -m "integration or e2e_http" \
+  # pytest exits 5 when a marker selects no tests; that is fine early on, so map 5 to success.
+  pyt() { uv run pytest "$@"; local rc=$?; [ $rc -eq 5 ] && return 0; return $rc; }
+  step "2 pytest unit (no network)" pyt -m unit --disable-socket --allow-unix-socket \
     --html="test-evidence/$PHASE_ID/reports/pytest.html" --self-contained-html
+  step "2 pytest integration + e2e_http" pyt -m "integration or e2e_http"
 fi
 if have frontend/package.json && grep -q '"test"' frontend/package.json 2>/dev/null && have frontend/node_modules; then
   step "2 vitest" npm --prefix frontend test

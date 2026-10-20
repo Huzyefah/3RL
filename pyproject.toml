@@ -36,7 +36,7 @@ markers = [
   "live: tests that call live external APIs (deselected by default)",
   "gcp: tests that need GCP resources (deselected by default)",
 ]
-# TODO: enable pytest-socket (--disable-socket) for `-m unit` runs only, e.g. in the Makefile.
+# pytest-socket: `--disable-socket` is passed for `-m unit` runs by scripts/gate.sh and CI.
 
 [tool.ruff]
 line-length = 100
