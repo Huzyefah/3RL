@@ -21,14 +21,16 @@ def make_dataset() -> Dataset:
         ts = pd.Timestamp(T0) + pd.Timedelta(minutes=m)
         for svc, metrics in (("svc-a", ["latency", "errors"]), ("svc-b", ["latency"])):
             for metric in metrics:
+                is_anchor = (m, svc, metric) == (150, "svc-a", "latency")
+                anchor = "2026-01-01T02:30:15" if is_anchor else ""
                 rows.append(
-                    (ts, svc, metric, "*", float(m), 100.0, "higher_bad", 0, 0, m / 100, False,
-                     "ps02_replay")
+                    (ts, svc, metric, "*", float(m), 100.0, "higher_bad", 0, 0, m / 100,
+                     bool(anchor), anchor, "ps02_replay")
                 )  # fmt: skip
         if m % 2 == 0:  # a segment series on svc-a on even minutes
             rows.append(
                 (ts, "svc-a", "fail_rate", "bank=BANK_C", 0.1, 0.5, "higher_bad", 50, 5, 0.2,
-                 False, "ps02_replay")
+                 False, "", "ps02_replay")
             )  # fmt: skip
     metrics = pd.DataFrame(rows, columns=METRIC_COLUMNS)
     logs = pd.DataFrame(

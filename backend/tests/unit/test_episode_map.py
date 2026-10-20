@@ -6,8 +6,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import get_args
 
+import pytest
+
 from sentinel.datagen.episode_map import by_anchor, events, incidents, load_episode_map, negatives
 from sentinel.datagen.types import NegCode, RCCode
+
+pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[3]
 CSV = ROOT / "data" / "ps02_system_telemetry.csv"

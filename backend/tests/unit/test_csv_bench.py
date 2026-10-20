@@ -48,18 +48,48 @@ def test_csv_bench_matches_rule_baselines_file() -> None:
         assert (got[k].recall or 0.0) == pytest.approx(float(e["recall"]), abs=0.005)
 
 
+def _counts(rows):
+    return {k: (v.tp, v.fp, v.fn) for k, v in by_system(rows).items()}
+
+
 @pytest.mark.unit
-def test_b0_b1_ignore_segment_metrics() -> None:
+def test_b0_b1_ignore_segment_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     base = {
         "timestamp": "2026-08-22T03:00:00",
         "service_name": "PaymentGateway",
-        "is_incident": "0",
+        "is_incident": "1",
     }
-    rows = [
-        {**base, "metric_type": "payment_success_rate", "value": "0.5", "threshold": "0.97"},
-        {**base, "metric_type": "cpu_usage", "value": "10", "threshold": "80"},
-    ]
-    res = by_system(score_rows(rows, "all"))
-    assert (res["B1"].tp, res["B1"].fp, res["B1"].fn) == (0, 0, 0)
-    assert (res["B0"].tp, res["B0"].fp, res["B0"].fn) == (0, 0, 0)
+    ps02 = {**base, "metric_type": "cpu_usage", "value": "10", "threshold": "80"}
+    # u = 1.2/0.97 >= 1: B0 and B1 would both alert on it if the filter let it through.
+    seg = {**base, "metric_type": "payment_success_rate", "value": "1.2", "threshold": "0.97"}
+    with_seg = _counts(score_rows([ps02, seg]))
+    assert with_seg == _counts(score_rows([ps02]))
+    assert with_seg["B0"] == (0, 0, 1)
+    # Without the metric filter the segment row would alert and change the counts.
+    import sentinel.eval.csv_bench as cb
+
+    monkeypatch.setattr(cb, "PS02_METRICS", frozenset({"cpu_usage", "payment_success_rate"}))
+    assert _counts(cb.score_rows([ps02, seg])) != with_seg
     assert DEFAULT_CSV.name == "ps02_system_telemetry.csv"
+
+
+@pytest.mark.unit
+def test_b0_b1_dense_data_with_segments_equals_filtered() -> None:
+    from sentinel.datagen import generator
+
+    ds = generator.build("ps02", 0)
+    # Only near-alert rows matter for B0/B1 (u >= 0.9); this keeps the test fast.
+    m = ds.metrics[ds.metrics["u"] >= 0.9]
+    rows = [
+        {
+            "timestamp": r["ts"].isoformat(),
+            "metric_type": r["metric"],
+            "value": str(r["value"]),
+            "threshold": str(r["threshold"]),
+            "is_incident": str(int(r["is_anchor"])),
+        }
+        for r in m.to_dict(orient="records")  # pyright: ignore[reportCallIssue]
+    ]
+    filtered = [r for r in rows if r["metric_type"] in generator.PS02_METRICS]
+    assert len(filtered) < len(rows)
+    assert _counts(score_rows(rows)) == _counts(score_rows(filtered))

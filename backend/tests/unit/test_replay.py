@@ -162,3 +162,17 @@ async def test_replay_pause_blocks_until_resume():
     await task
     assert len(ticks) == 3
     assert ticks[-1] - ticks[0] == timedelta(minutes=2)
+
+
+async def test_replay_surfaces_anchor_ts_in_attributes():
+    bus = InMemoryBus()
+    w = (datetime(2026, 1, 1, 2, 30), datetime(2026, 1, 1, 2, 31))
+    rp = Replayer(make_dataset(), bus, EventClock(), speed=0, sleep=FakeSleep())
+    flat = [c for m in _metric_msgs(await _collect(rp, bus, window=w)) for c in m]
+    anchored = [c for c in flat if "anchor_ts" in c.attributes]
+    assert len(anchored) == 1
+    c = anchored[0]
+    assert (c.service, c.metric, c.attributes["anchor_ts"]) == (
+        "svc-a", "latency", "2026-01-01T02:30:15"
+    )  # fmt: skip
+    assert c.ts == datetime(2026, 1, 1, 2, 30, tzinfo=UTC)

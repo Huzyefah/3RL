@@ -12,8 +12,9 @@ import pytest
 from scipy.stats import spearmanr
 
 from sentinel.calendar import events_at, load_calendar
+from sentinel.datagen.episode_map import events as map_events
 from sentinel.datagen.episode_map import load_episode_map
-from sentinel.datagen.generator import CSV_PATH, PS02_METRICS, build
+from sentinel.datagen.generator import CSV_PATH, MIN_SEGMENT_N, PS02_METRICS, build
 from sentinel.datagen.types import EVENT_COLUMNS, LOG_COLUMNS, METRIC_COLUMNS, Dataset
 from sentinel.redact import contains_pii
 from sentinel.utilisation import band, utilisation
@@ -279,17 +280,30 @@ def test_no_pii_in_logs(ds: Dataset) -> None:
 def test_events_cover_map_calendar_and_confounders(ds: Dataset) -> None:
     ev: Any = ds.events
     assert set(ev["kind"]) <= {"deploy", "maintenance", "campaign", "cron"}
-    assert {"deploy_FA-0003", "deploy_FA-0006", "deploy_FA-0016", "deploy_FA-0022"} <= set(
-        ev["event_id"]
-    )
+    map_ids = {e["event_id"] for e in map_events()}
+    assert len(map_ids) == 4 and map_ids <= set(ev["event_id"])
     assert {"azadi_sale_0814", "cashback_weekend_0822"} <= set(ev["event_id"])
     assert (ev["kind"] == "cron").sum() == 30  # EOD batch every day
     assert (ev["kind"] == "maintenance").sum() == 5  # Sundays in Aug 2026: 2, 9, 16, 23, 30
     # FP 3.4: some DB-pool / memory-leak incidents follow the deploy that caused them
-    causing = ev[ev["event_id"].str.startswith("deploy_INC-")]
-    for r in causing.itertuples(index=False):
-        g = ds.episode(str(r.event_id).removeprefix("deploy_"))
-        assert g.code in ("RC-DBPOOL", "RC-MEMLEAK") and r.ts < pd.Timestamp(g.precursor_start)
+    causing = [g for g in ds.ground_truth if g.cause_event_id]
+    assert causing
+    by_id = ev.set_index("event_id")
+    for g in causing:
+        r = by_id.loc[g.cause_event_id]
+        assert g.code in ("RC-DBPOOL", "RC-MEMLEAK") and r["ts"] < pd.Timestamp(g.precursor_start)
+        assert r["kind"] == "deploy" and r["service"] == g.service
+    assert all(g.kind == "incident" for g in causing)
+
+
+def test_event_ids_and_texts_do_not_leak_labels(ds: Dataset) -> None:
+    """Deploy ids/texts are opaque: no INC-/FA- ids, causing and benign deploys look alike."""
+    ev: Any = ds.events
+    for col in ("event_id", "text"):
+        assert not ev[col].str.contains(r"INC-|FA-|synthetic", regex=True).any(), col
+    dep = ev[ev["kind"] == "deploy"]
+    assert dep["event_id"].str.fullmatch(r"deploy_[0-9a-f]{8}").all()
+    assert dep["event_id"].is_unique
 
 
 # --- segment rate metrics ----------------------------------------------------------------------
@@ -320,7 +334,7 @@ def test_binomial_counts_consistent(ds: Dataset) -> None:
     frac = has["n_bad"] / has["n_total"]
     expect = np.where(has["direction"] == "lower_bad", 1 - frac, frac)
     assert np.allclose(has["value"], expect)
-    sample = has.sample(2000, random_state=0)
+    sample = has[has["n_total"] >= MIN_SEGMENT_N].sample(2000, random_state=0)
     got = [utilisation(r.value, r.threshold, r.direction) for r in sample.itertuples(index=False)]
     assert np.allclose(sample["u"], got)
     # an RC-BANK episode degrades its bank's issuer timeouts around onset, not other banks'
@@ -339,3 +353,245 @@ def test_salary_day_multiplier(ds: Dataset) -> None:
     vol = m[m["metric"] == "payment_success_rate"].groupby(m["ts"].dt.date)["n_total"].sum()
     ratio = vol[datetime(2026, 8, 2).date()] / vol[datetime(2026, 8, 5).date()]
     assert 1.5 < ratio < 1.7
+
+
+# --- anti-leakage (FP 1.4 F4): construction artifacts must not label the episodes ---------------
+
+
+def _precision(hit_inc: int, hit_neg: int) -> float:
+    return hit_inc / (hit_inc + hit_neg) if hit_inc + hit_neg else 0.0
+
+
+def _rule_hits(ds: Dataset, rule) -> tuple[int, int, int, int]:
+    """(incident hits, negative hits, #incidents, #negatives) for a per-episode boolean rule."""
+    inc = [g for g in ds.ground_truth if g.kind == "incident"]
+    neg = [g for g in ds.ground_truth if g.kind == "negative"]
+    return sum(map(rule, inc)), sum(map(rule, neg)), len(inc), len(neg)
+
+
+def test_warn_log_before_onset_is_not_a_label(ds: Dataset) -> None:
+    """'Any WARN/ERROR log on the service in the 3 h before onset' must not separate classes."""
+    lg: Any = ds.logs
+    bad = lg[lg["level"].isin(["WARN", "ERROR"])]
+
+    def rule(g) -> bool:
+        w = bad[
+            (bad["service"] == g.service)
+            & (bad["ts"] >= pd.Timestamp(g.onset - timedelta(hours=3)))
+            & (bad["ts"] < pd.Timestamp(g.onset))
+        ]
+        return not w.empty
+
+    hi, hn, ni, nn = _rule_hits(ds, rule)
+    assert _precision(hi, hn) < 0.8, (hi, hn)
+    assert hn / nn >= 0.4, (hn, nn)
+
+
+def test_background_warn_noise_reuses_incident_templates(ds: Dataset) -> None:
+    lg: Any = ds.logs
+    bad = lg[lg["level"].isin(["WARN", "ERROR"])]
+    near = np.zeros(len(bad), dtype=bool)
+    ts = bad["ts"].to_numpy()
+    svc = bad["service"].to_numpy()
+    for g in ds.ground_truth:
+        lo = np.datetime64(g.precursor_start - timedelta(hours=1))
+        hi = np.datetime64(g.end + timedelta(hours=1))
+        near |= (svc == g.service) & (ts >= lo) & (ts <= hi)
+    background = bad[~near]
+    per_service_day = len(background) / (8 * 30)
+    assert 1.0 <= per_service_day <= 6.0, per_service_day
+    assert {"hikari_timeout", "ibft_rc91"} <= set(background["template_id"])
+    assert "ssl_handshake_cert_expired" not in set(lg["template_id"])
+
+
+def _rising_20(series, emap):
+    def rule(g) -> bool:
+        s = series[(g.service, emap[g.episode_id].metric)]
+        w = _window(s, g.onset - timedelta(minutes=20), g.onset - timedelta(minutes=1))
+        return _rho(w) >= 0.9 and float(w.iloc[-1] - w.iloc[0]) >= 0.08
+
+    return rule
+
+
+def test_precursor_length_is_not_a_label(ds: Dataset, series, emap) -> None:
+    """'Rising for >= 20 min before onset' fires on a sizeable share of negatives too."""
+    hi, hn, ni, nn = _rule_hits(ds, _rising_20(series, emap))
+    assert hn / nn >= 0.35, (hn, nn)
+    assert _precision(hi, hn) < 0.8, (hi, hn)
+
+
+def test_level_15_min_before_onset_is_not_a_label(ds: Dataset, series, emap) -> None:
+    def rule(g) -> bool:
+        s = series[(g.service, emap[g.episode_id].metric)]
+        return float(s.loc[pd.Timestamp(g.onset - timedelta(minutes=15))]) > 0.6
+
+    hi, hn, ni, nn = _rule_hits(ds, rule)
+    assert hn / nn >= 0.35, (hn, nn)
+    assert _precision(hi, hn) < 0.8, (hi, hn)
+
+
+def test_deploy_nearby_is_not_a_label(ds: Dataset) -> None:
+    """Benign deploys land near negatives and abrupt incidents too, not only near N4 / causes."""
+    ev: Any = ds.events
+    dep = ev[ev["kind"] == "deploy"]
+
+    def rule(g) -> bool:
+        w = dep[
+            (dep["service"] == g.service)
+            & (dep["ts"] >= pd.Timestamp(g.onset - timedelta(hours=3)))
+            & (dep["ts"] <= pd.Timestamp(g.onset))
+        ]
+        return not w.empty
+
+    hi, hn, _, _ = _rule_hits(ds, rule)
+    assert 0.2 < _precision(hi, hn) < 0.8, (hi, hn)
+    other_neg = [g for g in ds.ground_truth if g.kind == "negative" and g.code not in ("N4", "N6")]
+    assert sum(map(rule, other_neg)) >= 2
+    uncaused = [g for g in ds.ground_truth if g.kind == "incident" and not g.cause_event_id]
+    assert sum(map(rule, uncaused)) >= 3
+    assert any(rule(g) for g in ds.ground_truth if g.abrupt)
+
+
+# --- segment volume floor ------------------------------------------------------------------------
+
+
+def test_segment_u_neutral_below_min_volume(ds: Dataset) -> None:
+    m: Any = ds.metrics
+    seg = m[~m["metric"].isin(_PS)]
+    low = seg[seg["n_total"] < MIN_SEGMENT_N]
+    assert len(low) > 0 and (low["u"] == 0.0).all()
+    assert MIN_SEGMENT_N == 30
+
+
+def test_segment_u_rarely_breaches_outside_episodes(ds: Dataset) -> None:
+    m: Any = ds.metrics
+    seg = m[~m["metric"].isin(_PS) & (m["n_total"] >= MIN_SEGMENT_N)]
+    inside = np.zeros(len(seg), dtype=bool)
+    ts, svc = seg["ts"].to_numpy(), seg["service"].to_numpy()
+    for g in ds.ground_truth:
+        inside |= (
+            (svc == g.service)
+            & (ts >= np.datetime64(g.precursor_start))
+            & (ts <= np.datetime64(g.end))
+        )
+    out = seg[~inside]
+    assert (out["u"] >= 1.0).mean() < 0.005
+
+
+# --- anchors keep their original timestamp ------------------------------------------------------
+
+
+def test_anchor_floor_keeps_original_ts(ds: Dataset, csv: Any) -> None:
+    m: Any = ds.metrics
+    assert (m.loc[~m["is_anchor"], "anchor_ts"] == "").all()
+    anchors = m[m["is_anchor"]]
+    assert len(anchors) == 500
+    j = csv.merge(
+        anchors,
+        left_on=["minute", "service_name", "metric_type"],
+        right_on=["ts", "service", "metric"],
+        validate="one_to_one",
+    )
+    assert len(j) == 500
+    orig = j["timestamp"].dt.strftime("%Y-%m-%dT%H:%M:%S")
+    assert (j["anchor_ts"].astype(str) == orig).all()
+    assert (pd.to_datetime(j["anchor_ts"].astype(str)).dt.floor("min") == j["ts"]).all()
+    assert (j["timestamp"].dt.second > 0).any()  # the floor actually dropped seconds
+
+
+def test_n1_anchor_2026_08_22_on_calendar(ds: Dataset, emap) -> None:
+    a = next(
+        a
+        for a in emap.values()
+        if (a.anchor_ts, a.service, a.metric)
+        == ("2026-08-22T20:25:48", "PaymentGateway", "connection_pool")
+    )
+    g = ds.episode(a.episode_id)
+    assert (g.kind, g.code) == ("negative", "N1")
+    assert g.anchor_ts == "2026-08-22T20:25:48" and g.onset == datetime(2026, 8, 22, 20, 25)
+    active = {e.id for e in events_at(g.onset, load_calendar())}
+    assert "cashback_weekend_0822" in active
+    assert "cashback_weekend_0822" in g.benign_evidence
+    assert "cashback_weekend_0822" in set(ds.events["event_id"])
+
+
+def test_n3_only_on_its_benign_for_metrics(emap) -> None:
+    """eod_settlement is benign_for disk_io/queue_depth only; other metrics fall back."""
+    eod = next(e for e in load_calendar() if e.id == "eod_settlement")
+    assert eod.benign_for
+    for a in emap.values():
+        if a.code == "N3":
+            assert a.metric in eod.benign_for, a.episode_id
+    nh = next(
+        a
+        for a in emap.values()
+        if (a.anchor_ts, a.service) == ("2026-08-20T16:27:07", "NotificationHub")
+    )
+    assert nh.code in ("N5", "N6") and "eod_settlement" not in nh.benign_evidence
+
+
+# --- custom windows -----------------------------------------------------------------------------
+
+
+def test_window_keeps_episodes_overlapping_it(ds: Dataset, emap) -> None:
+    """An episode whose onset is past the window end but whose precursor overlaps it is kept."""
+    g = next(
+        g
+        for g in sorted(ds.ground_truth, key=lambda g: g.onset)
+        if g.kind == "incident" and g.onset - g.precursor_start >= timedelta(minutes=60)
+    )
+    hi = g.onset - timedelta(minutes=10)
+    lo = g.precursor_start - timedelta(hours=2)
+    part = build("ps02", seed=0, window=(lo, hi), use_cache=False)
+    kept = part.episode(g.episode_id)
+    assert (kept.precursor_start, kept.onset, kept.end) == (g.precursor_start, g.onset, g.end)
+    m: Any = part.metrics
+    s = (
+        m[(m["service"] == g.service) & (m["metric"] == emap[g.episode_id].metric)]
+        .set_index("ts")["u"]
+        .sort_index()
+    )
+    pre = _window(s, g.precursor_start, hi)
+    assert pre.iloc[-3:].mean() - pre.iloc[:3].mean() > 0.05
+    # episodes entirely outside the window are not reported
+    for e in part.ground_truth:
+        assert e.precursor_start <= hi and e.end >= lo
+
+
+def test_deterministic_across_hashseed() -> None:
+    import os
+    import subprocess
+    import sys
+
+    code = (
+        "import hashlib, pandas as pd; from datetime import datetime;"
+        "from sentinel.datagen.generator import build;"
+        "ds = build('ps02', seed=0, window=(datetime(2026, 8, 1), datetime(2026, 8, 1, 23, 59)));"
+        "h = hashlib.sha1();"
+        "[h.update(pd.util.hash_pandas_object(d, index=False).values.tobytes())"
+        " for d in (ds.metrics, ds.logs, ds.events)];"
+        "h.update(repr(ds.ground_truth).encode()); print(h.hexdigest())"
+    )
+    out = {
+        subprocess.run(
+            [sys.executable, "-c", code],
+            env={**os.environ, "PYTHONHASHSEED": hs},
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        for hs in ("1", "4242")
+    }
+    assert len(out) == 1
+
+
+def test_parquet_roundtrip_keeps_anchor_ts(tmp_path) -> None:
+    from sentinel.datagen.exporters import from_parquet, to_parquet
+
+    win = (datetime(2026, 8, 1), datetime(2026, 8, 1, 23, 59))
+    ds = build("ps02", seed=0, window=win)
+    to_parquet(ds, tmp_path)
+    back = from_parquet(tmp_path)
+    pd.testing.assert_frame_equal(ds.metrics, back.metrics)
+    assert (back.metrics["anchor_ts"] != "").sum() == ds.metrics["is_anchor"].sum() > 0
+    assert back.ground_truth == ds.ground_truth

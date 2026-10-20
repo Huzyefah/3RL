@@ -39,6 +39,7 @@ METRIC_COLUMNS = [
     "n_bad",
     "u",  # utilisation (sentinel.utilisation)
     "is_anchor",  # True for the 500 pinned CSV rows
+    "anchor_ts",  # original CSV timestamp with seconds (ISO) on anchor rows, "" elsewhere
     "source",  # ps02_replay | seeded_replay
 ]
 LOG_COLUMNS = ["ts", "service", "level", "template_id", "message"]
@@ -78,6 +79,7 @@ class GroundTruthEpisode:
     anchor_ts: str | None  # None in seeded mode
     cascade_parent: str | None = None
     benign_evidence: tuple[str, ...] = ()
+    cause_event_id: str | None = None  # the deploy that caused it (FP 3.4 confounder), if any
 
 
 @dataclass

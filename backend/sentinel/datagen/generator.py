@@ -19,9 +19,20 @@
    ``otp_delivery_rate`` per provider, ``login_failure_rate``) carry binomial ``n_total``/``n_bad``;
    RC-BANK, RC-OTP-PROVIDER and RC-AUTH-ATTACK degrade their segment. D3: filter B0/B1 input with
    ``metric in PS02_METRICS``.
-5. **Logs** from episode templates (masked/fictional identifiers only) plus INFO heartbeats;
-   **events**: calendar occurrences, the map's synthetic deploys, causing deploys before 25% of
-   RC-DBPOOL/RC-MEMLEAK precursors, and benign background deploys kept away from episodes.
+5. **Logs** from episode templates (masked/fictional identifiers only), INFO heartbeats, and
+   background WARN/ERROR noise reusing incident template ids (a few per service-day); N1/N6 and
+   some N4/N5 also carry an incident-looking WARN precursor. **Events**: calendar occurrences,
+   the map's N4 deploys, causing deploys before 25% of RC-DBPOOL/RC-MEMLEAK precursors, benign
+   background deploys, and benign deploys before a seeded share of all other episodes (except
+   N6). Every deploy has an opaque id and the same text, so ids never reveal a label.
+6. **Anti-leakage (FP 1.4 F4).** Construction artifacts must not label episodes: "a WARN/ERROR
+   log in the 3 h before onset", "rising for >= 20 min", "u at onset-15 > 0.6" and "a deploy
+   in the 3 h before onset" each fire on a sizeable share of negatives (tested).
+7. **Custom windows.** Episodes overlapping the window are kept whole in ``ground_truth``
+   (unclipped times) and their in-window part is blended; those entirely outside are dropped.
+8. **Segment volume floor.** A segment minute with ``n_total < MIN_SEGMENT_N`` (30) gets
+   ``u = 0.0`` (neutral); ``value``/``n_total``/``n_bad`` stay as observed.
+9. ``anchor_ts`` holds each anchor's original CSV timestamp with seconds ("" elsewhere).
 
 Deterministic given ``seed``: each series and episode draws from its own
 ``default_rng([seed, ...])``.
@@ -34,6 +45,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -42,8 +54,11 @@ from scipy.signal import lfilter
 from sentinel.calendar import CalendarEvent, load_calendar
 from sentinel.datagen import episode_map
 from sentinel.datagen.episodes import (
+    NOISE_TEMPLATES,
     LogTemplate,
     daily_tps_factor,
+    deploy_event_id,
+    deploy_text,
     negative_shape,
     precursor_shape,
     render_log,
@@ -58,6 +73,7 @@ from sentinel.datagen.types import (
     Mode,
 )
 from sentinel.topology import Topology
+from sentinel.utilisation import Direction, utilisation
 
 CSV_PATH = Path(__file__).resolve().parents[3] / "data" / "ps02_system_telemetry.csv"
 PS02_METRIC_ORDER: tuple[str, ...] = (
@@ -75,16 +91,25 @@ SOURCE = "ps02_replay"
 
 BACKGROUND_CAP = 0.895  # background never reaches 0.90 (FP 5)
 NON_ANCHOR_CAP = 0.945  # no generated minute is CRITICAL; only CSV anchors are
+# A segment minute with fewer transactions than this carries the neutral u = 0.0 (no budget used):
+# the rate is too noisy to mean anything, matching the binomial detector's n_total >= 30 rule
+# (FP 6). value / n_total / n_bad stay as observed.
+MIN_SEGMENT_N = 30
+NOISE_LOGS_PER_SERVICE_DAY = 3.0  # Poisson mean of background WARN/ERROR lines (FP 1.4 F4)
+NEARBY_DEPLOY_P = 0.35  # share of episodes given a benign deploy in the 3 h before onset
+_GENERIC_NOISE_CODES = ("RC-DBPOOL", "RC-MEMLEAK", "RC-QUEUE", "RC-ABRUPT")
 _SLOW_METRICS = ("memory_usage", "disk_io")  # weakly diurnal
 
 # Segment volumes (transactions per minute at daily factor 1.0) and healthy bad-probabilities.
-_BANK_VOLUME = {"BANK_A": 120.0, "BANK_B": 90.0, "BANK_C": 60.0, "BANK_D": 40.0, "BANK_E": 25.0}
-_PROVIDER_VOLUME = {"P1": 80.0, "P2": 40.0}
-_LOGIN_VOLUME = 150.0
+# Sized so that, outside episodes, fewer than 0.5% of segment minutes with n_total >= 30 breach
+# (u >= 1) by binomial noise alone; the smallest bank still dips under MIN_SEGMENT_N at night.
+_BANK_VOLUME = {"BANK_A": 600.0, "BANK_B": 450.0, "BANK_C": 300.0, "BANK_D": 200.0, "BANK_E": 125.0}
+_PROVIDER_VOLUME = {"P1": 400.0, "P2": 200.0}
+_LOGIN_VOLUME = 750.0
 _P_HEALTHY = {
-    "issuer_timeout_rate": 0.004,
-    "payment_other_fail": 0.003,
-    "otp_delivery_rate": 0.01,
+    "issuer_timeout_rate": 0.001,
+    "payment_other_fail": 0.001,
+    "otp_delivery_rate": 0.004,
     "login_failure_rate": 0.02,
 }
 _P_PEAK = {"issuer_timeout_rate": 0.08, "otp_delivery_rate": 0.15, "login_failure_rate": 0.35}
@@ -169,6 +194,9 @@ class _Ps02Builder:
         self.base, self.mult = self._load_curves()
         self.u = np.zeros((len(self.ps_keys), self.T))
         self.is_anchor = np.zeros_like(self.u, dtype=bool)
+        self.anchor_code = np.zeros(self.u.shape, dtype=np.int16)  # index into anchor_ts_cats
+        self.anchor_ts_cats: list[str] = [""]
+        self.cause: dict[str, datetime] = {}  # episode_id -> causing deploy ts
         self.value = np.zeros_like(self.u)
         self.threshold = np.array(
             [self.topo.services[s].metrics[m].threshold for s, m in self.ps_keys]
@@ -227,8 +255,9 @@ class _Ps02Builder:
         self._pin(anchors)
         self._calendar_events()
         self._map_events()
-        self._background_deploys()
+        self._deploys()
         self._heartbeat_logs()
+        self._noise_logs()
         return Dataset(
             mode="ps02",
             seed=self.seed,
@@ -251,9 +280,22 @@ class _Ps02Builder:
         np.clip(self.u, 0.05, BACKGROUND_CAP, out=self.u)
 
     def _anchors(self) -> pd.DataFrame:
+        """In-window CSV rows; ``self.crit_u`` keeps every CRITICAL anchor's u, window or not."""
         d = pd.read_csv(CSV_PATH)
         ts = pd.to_datetime(d["timestamp"])
         d["minute"] = ts.dt.floor("min")
+        d["anchor_ts"] = ts.dt.strftime("%Y-%m-%dT%H:%M:%S")
+        d["u"] = [
+            utilisation(float(v), float(t), "higher_bad")
+            for v, t in zip(d["value"], d["threshold"], strict=True)
+        ]
+        crit = d[d["alert_level"] == "CRITICAL"]
+        self.crit_u = {
+            (m.to_pydatetime(), s, k): float(u)
+            for m, s, k, u in zip(
+                crit["minute"], crit["service_name"], crit["metric_type"], crit["u"], strict=True
+            )
+        }
         d = d[(d["minute"] >= pd.Timestamp(self.t0)) & (d["minute"] <= pd.Timestamp(self.t1))]
         d = d.assign(
             j=[
@@ -261,7 +303,6 @@ class _Ps02Builder:
                 for s, m in zip(d["service_name"], d["metric_type"], strict=True)
             ],
             k=((d["minute"] - pd.Timestamp(self.t0)) // pd.Timedelta(minutes=1)).astype(int),
-            u=d["value"] / d["threshold"],
         )
         return d.reset_index(drop=True)
 
@@ -278,15 +319,13 @@ class _Ps02Builder:
             self.u[j, lo:hi] += resid * np.exp(-0.5 * (d / sigma) ** 2)
 
     def _episodes(self, anchors: pd.DataFrame) -> None:
-        crit = anchors[anchors["alert_level"] == "CRITICAL"].set_index(
-            ["minute", "service_name", "metric_type"]
-        )
+        """Every mapped episode that overlaps the window: the in-window part is blended (an onset
+        outside a custom window still shapes the precursor or tail inside it) and its ground
+        truth is kept with its full, unclipped times. Episodes entirely outside are dropped."""
+        del anchors  # targets come from self.crit_u so out-of-window onsets still have one
         for a in episode_map.load_episode_map():
             onset = datetime.fromisoformat(a.onset_ts)
-            if not self._in(onset):
-                continue
-            target = float(crit.loc[(pd.Timestamp(onset), a.service, a.metric), "u"])
-            self._episode(a, onset, target)
+            self._episode(a, onset, self.crit_u[(onset, a.service, a.metric)])
 
     def _episode(self, a: EpisodeAssignment, onset: datetime, target: float) -> None:
         num = int(a.episode_id.split("-")[1])
@@ -325,18 +364,16 @@ class _Ps02Builder:
             self._log(onset + timedelta(minutes=tpl.offset_min), a.service, tpl, bank, provider)
 
         precursor_start = onset - timedelta(minutes=shape.onset_index)
+        end = onset + timedelta(minutes=max(tail + max_lag, 1))
+        if precursor_start > self.t1 or end < self.t0:
+            return  # entirely outside the window
+        cause_id = None
         if "deploy" in shape.event_kinds and a.kind == "incident":
             ts = precursor_start - timedelta(minutes=int(rng.integers(5, 21)))
+            cause_id = deploy_event_id(a.service, ts)
+            self.cause[a.episode_id] = ts
             if self._in(ts):
-                self.events.append(
-                    (
-                        ts,
-                        "deploy",
-                        a.service,
-                        f"Rolling deploy of {a.service} (synthetic, deploy_{a.episode_id})",
-                        f"deploy_{a.episode_id}",
-                    )
-                )
+                self.events.append((ts, "deploy", a.service, deploy_text(a.service, ts), cause_id))
         self.ground_truth.append(
             GroundTruthEpisode(
                 episode_id=a.episode_id,
@@ -346,11 +383,12 @@ class _Ps02Builder:
                 segment_key=a.segment_key,
                 precursor_start=precursor_start,
                 onset=onset,
-                end=onset + timedelta(minutes=max(tail + max_lag, 1)),
+                end=end,
                 abrupt=a.abrupt,
                 anchor_ts=a.anchor_ts,
                 cascade_parent=a.cascade_parent,
                 benign_evidence=a.benign_evidence,
+                cause_event_id=cause_id,
             )
         )
 
@@ -377,6 +415,9 @@ class _Ps02Builder:
         self.threshold[j, k] = anchors["threshold"].to_numpy()
         self.u[j, k] = anchors["u"].to_numpy()
         self.is_anchor[j, k] = True
+        self.anchor_ts_cats = ["", *sorted(set(anchors["anchor_ts"]))]
+        pos = {t: i for i, t in enumerate(self.anchor_ts_cats)}
+        self.anchor_code[j, k] = [pos[t] for t in anchors["anchor_ts"]]
 
     def _calendar_events(self) -> None:
         days = self.days
@@ -414,25 +455,69 @@ class _Ps02Builder:
             if self._in(ts):
                 self.events.append((ts, e["kind"], e["service"], e["text"], e["event_id"]))
 
-    def _background_deploys(self) -> None:
-        """Benign deploys (so "there was a deploy" is never a free pass), away from episodes."""
-        rng = self._rng(3)
+    def _deploys(self) -> None:
+        """Benign deploys, so "there was a deploy nearby" is never a free label (FP 1.4 F4).
+
+        Background deploys land on random services in business hours; on top, a seeded
+        ``NEARBY_DEPLOY_P`` share of episodes (incidents, abrupt ones included, and negatives)
+        get a benign deploy 10-170 min before onset. The only exclusion zones are around a
+        causing deploy (so the cause stays unambiguous) and N6 (which must have no evidence).
+        All deploys share one id/text format (``deploy_event_id``/``deploy_text``).
+        """
         busy: dict[str, list[tuple[datetime, datetime]]] = {}
         for g in self.ground_truth:
-            busy.setdefault(g.service, []).append(
-                (g.precursor_start - timedelta(hours=3), g.end + timedelta(hours=1))
-            )
-        n = 0
+            if g.code == "N6":
+                lo = g.precursor_start - timedelta(hours=3)
+                busy.setdefault(g.service, []).append((lo, g.end))
+            elif g.episode_id in self.cause:
+                lo = self.cause[g.episode_id] - timedelta(hours=3)
+                busy.setdefault(g.service, []).append((lo, g.end + timedelta(hours=1)))
+        taken = {e[4] for e in self.events}
+
+        def add(svc: str, ts: datetime) -> None:
+            if not self._in(ts) or any(lo <= ts <= hi for lo, hi in busy.get(svc, [])):
+                return
+            eid = deploy_event_id(svc, ts)
+            if eid not in taken:
+                taken.add(eid)
+                self.events.append((ts, "deploy", svc, deploy_text(svc, ts), eid))
+
+        rng = self._rng(3)
         for d in self.days:
             for _ in range(int(rng.poisson(1.5))):
                 svc = self.services[int(rng.integers(len(self.services)))]
-                ts = d + timedelta(minutes=int(rng.integers(9 * 60, 18 * 60)))
-                if not self._in(ts) or any(lo <= ts <= hi for lo, hi in busy.get(svc, [])):
-                    continue
-                n += 1
-                eid = f"deploy_bg_{n:03d}"
-                text = f"Rolling deploy of {svc} build {ts:%Y.%m.%d}-{n} (synthetic, {eid})"
-                self.events.append((ts, "deploy", svc, text, eid))
+                add(svc, d + timedelta(minutes=int(rng.integers(9 * 60, 18 * 60))))
+        rng = self._rng(7)
+        for g in sorted(self.ground_truth, key=lambda g: g.episode_id):
+            hit = rng.random() < NEARBY_DEPLOY_P
+            ts = g.onset - timedelta(minutes=int(rng.integers(10, 171)))
+            if hit and g.code not in ("N4", "N6") and g.episode_id not in self.cause:
+                add(g.service, ts)
+
+    def _noise_logs(self) -> None:
+        """Background WARN/ERROR lines reusing incident template ids at random minutes, a few
+        per service-day (FP 1.4 F4), so "a WARN/ERROR log before onset" is not a label. Each
+        service draws from the generic incident templates plus those of its mapped codes."""
+        codes: dict[str, set[str]] = {s: set(_GENERIC_NOISE_CODES) for s in self.services}
+        for a in episode_map.load_episode_map():
+            if a.kind == "incident":
+                codes[a.service].add(a.code)
+        by_code: dict[str, set[str]] = {}
+        for code in sorted({c for cs in codes.values() for c in cs}):
+            tpls = precursor_shape(code, np.random.default_rng(0)).log_templates
+            by_code[code] = {t.template_id for t in tpls}
+        rng = self._rng(6)
+        banks, providers = sorted(_BANK_VOLUME), sorted(_PROVIDER_VOLUME)
+        for s in self.services:
+            ids = set().union(*(by_code[c] for c in codes[s]))
+            pool = [t for t in NOISE_TEMPLATES if t.template_id in ids]
+            for d in self.days:
+                for _ in range(int(rng.poisson(NOISE_LOGS_PER_SERVICE_DAY))):
+                    tpl = pool[int(rng.integers(len(pool)))]
+                    ts = d + timedelta(minutes=int(rng.integers(0, 1440)))
+                    bank = banks[int(rng.integers(len(banks)))]
+                    provider = providers[int(rng.integers(len(providers)))]
+                    self._log(ts, s, tpl, bank, provider)
 
     def _heartbeat_logs(self) -> None:
         for i in range(0, self.T, 15):
@@ -476,11 +561,12 @@ class _Ps02Builder:
             elif metric in ("otp_delivery_rate", "login_failure_rate"):
                 n_bad[i] = rng.binomial(n_total[i], self.seg_p[(svc, metric, seg)])
         lower = np.array([d == "lower_bad" for d in dirs])[:, None]
-        with np.errstate(divide="ignore", invalid="ignore"):
-            frac = np.where(n_total > 0, n_bad / np.maximum(n_total, 1), 0.0)
+        frac = np.where(n_total > 0, n_bad / np.maximum(n_total, 1), 0.0)
         value = np.where(lower, 1.0 - frac, frac)
-        thr2 = thr[:, None]
-        u = np.where(lower, (1.0 - value) / (1.0 - thr2), value / thr2)
+        u = np.empty_like(value)
+        for i in range(S):  # utilisation() is elementwise for an array value and scalar threshold
+            u[i] = utilisation(cast(float, value[i]), float(thr[i]), cast(Direction, dirs[i]))
+        u[n_total < MIN_SEGMENT_N] = 0.0  # neutral below the volume floor (MIN_SEGMENT_N)
         return value, n_total, n_bad, u, dirs
 
     def _metrics_frame(self) -> pd.DataFrame:
@@ -517,6 +603,10 @@ class _Ps02Builder:
                 "n_bad": stack(zeros, seg_nb),
                 "u": stack(self.u, seg_u),
                 "is_anchor": stack(self.is_anchor, np.zeros((S, T), dtype=bool)),
+                "anchor_ts": pd.Categorical.from_codes(
+                    stack(self.anchor_code, np.zeros((S, T), dtype=np.int16)),
+                    categories=self.anchor_ts_cats,
+                ),
                 "source": pd.Categorical.from_codes(
                     np.zeros(n_series * T, dtype=np.int8), categories=[SOURCE]
                 ),

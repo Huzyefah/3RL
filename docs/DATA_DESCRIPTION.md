@@ -83,3 +83,46 @@ B0 alerts iff value >= threshold; B1 alerts iff alert_level == CRITICAL.
 - False CRITICALs on 08-14: 03:18 AnalyticsDashboard disk_io and 19:49 AuthService memory_usage.
 - False CRITICAL on 08-22 20:25 PaymentGateway connection_pool (test split).
 - No false CRITICAL on Aug 1-3.
+
+## Addendum: generated dataset (`sentinel.datagen.generator`, ps02 mode)
+
+Anti-leakage (FP 1.4 F4): the evaluation must not be solvable from construction artifacts.
+Measured on seed 0 (28 incidents, 22 negatives, so chance precision is 0.56); the tests in
+`backend/tests/unit/test_generator.py` hold each rule's precision below 0.8:
+
+| trivial rule (per episode, on its service/anchor metric) | incidents | negatives | precision |
+|---|---|---|---|
+| any WARN/ERROR log in the 3 h before onset | 24/28 | 19/22 | 0.56 |
+| rising for >= 20 min before onset (rho >= 0.9, +0.08 u) | 21/28 | 11/22 | 0.66 |
+| u at onset-15 min > 0.6 | 17/28 | 10/22 | 0.63 |
+| a deploy on the service in the 3 h before onset | 14/28 | 11/22 | 0.56 |
+
+How:
+- **Logs.** Background WARN/ERROR noise reuses incident template ids (Poisson mean 3 per
+  service-day, at random minutes; RC-CERT's template is never used, so it stays novel). N1 and N6
+  always, and about half of N4/N5, carry an incident-looking WARN precursor.
+- **Lead length.** N6 leads span 10-60 min; about half of N4/N5 draws get a slow 20-60 min
+  pre-drift. Non-anchor minutes stay < 0.95 and background < 0.90 outside episodes, so B1 still
+  finds exactly the 50 CSV CRITICAL minutes and B0 finds none.
+- **Deploys.** Benign deploys land at random and before about 35% of episodes (incidents,
+  abrupt ones included, and negatives). Exclusion zones only around incidents' causing deploys and
+  N6. Every deploy has an opaque id `deploy_<8 hex>` and the same text format; the causing deploy
+  is recorded only in ground truth (`GroundTruthEpisode.cause_event_id`).
+
+Other generator conventions:
+- **Segment volume floor.** A segment minute with `n_total < MIN_SEGMENT_N` (30, the binomial
+  detector's floor in FP 6) has `u = 0.0` (neutral: no error budget used); `value`, `n_total`,
+  `n_bad` stay as observed. Segment volumes (BANK_A 600 ... BANK_E 125, P1 400, P2 200, login 750
+  per minute at daily factor 1.0) and healthy bad-rates (issuer timeout 0.1%, other failures 0.1%,
+  OTP 0.4%, login 2%) keep binomial false breaches (u >= 1 with n_total >= 30, outside
+  episodes) under 0.5%.
+- **`anchor_ts` column.** Each of the 500 anchor rows carries its original CSV timestamp with
+  seconds (ISO, e.g. `2026-08-22T20:25:48`); non-anchor rows carry `""`. The replayer surfaces
+  it as `attributes["anchor_ts"]` on the anchor's metric CES.
+- **Custom windows.** `build(window=...)` keeps the ground truth of every episode that overlaps
+  the window (with its full, unclipped times) and blends the in-window part of its shape;
+  episodes entirely outside are dropped.
+- **N3 and `benign_for`.** A calendar entry with `benign_for` explains only those metrics:
+  `eod_settlement` covers disk_io and queue_depth. The 2026-08-20 16:27 NotificationHub
+  memory_usage row falls inside the EOD window but is not explained by it, so it is N5. No ps02
+  anchor is N3 now: N1 3, N4 4, N5 11, N6 4.

@@ -10,6 +10,9 @@ Pacing (plan D4): a tick sleeps ``60 / speed`` seconds; ``speed <= 0`` or ``None
 sleeping. While ``gate.busy()`` (an incident is between Planning and AwaitingApproval) the
 replayer drops to 1x (60 s per tick) so the agent sees time pass at human speed, then resumes.
 
+Anchor rows (the 500 pinned CSV rows, floored to the minute) carry the original timestamp with
+seconds in ``attributes["anchor_ts"]``.
+
 Idempotency: event ids are uuid5 of (kind, ts, service, metric, segment), so redelivery dedupes.
 Dataset timestamps are naive; they are interpreted as UTC for the clock and CES.
 """
@@ -151,12 +154,14 @@ class Replayer:
                 await self._sleep(delay)
 
     def _metric(self, r: Any, ts: datetime, seed: int) -> CES:
+        anchor = str(getattr(r, "anchor_ts", "") or "")
         return CES(
             event_id=_eid("metric", ts.isoformat(), r.service, r.metric, r.segment_key),
             ts=ts, source=str(r.source), kind="metric", service=str(r.service),
             segment_key=str(r.segment_key), metric=str(r.metric), value=float(r.value),
             threshold=float(r.threshold), direction=r.direction,
             n_total=int(r.n_total), n_bad=int(r.n_bad), seed=seed,
+            attributes={"anchor_ts": anchor} if anchor else {},
         )  # fmt: skip
 
     def _log(self, r: Any) -> CES:

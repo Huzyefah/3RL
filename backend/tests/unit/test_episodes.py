@@ -1,5 +1,6 @@
 """Shape library for the data generator (FP 3.3, 3.4, 5; FP 13 Task 2)."""
 
+import re
 from datetime import datetime
 
 import numpy as np
@@ -10,8 +11,10 @@ from sentinel.datagen.episodes import (
     INCIDENT_CODES,
     LEAD_WINDOWS,
     NEGATIVE_CODES,
+    NOISE_TEMPLATES,
     Shape,
     daily_tps_factor,
+    deploy_event_id,
     negative_shape,
     precursor_shape,
     rate_counts,
@@ -149,7 +152,7 @@ def test_other_negatives_carry_benign_evidence(code: str) -> None:
 def test_n4_and_n5_recover() -> None:
     for seed in SEEDS:
         n4 = negative_shape("N4", np.random.default_rng(seed))
-        assert 5 <= len(n4.u_offset) <= 10
+        assert 3 <= len(n4.u_offset) - n4.onset_index <= 9  # bump then recovery after onset
         assert n4.u_offset[-1] < 0.5 and n4.event_kinds == ("deploy",)
         n5 = negative_shape("N5", np.random.default_rng(seed))
         touch = int((n5.u_offset >= 1.0 - 1e-9).sum())
@@ -237,3 +240,80 @@ def test_fp5_example_templates_present() -> None:
     assert "HikariPool-1 - Connection is not available, request timed out after 30000ms" in msgs
     assert "SMS P1 DLR timeout" in msgs
     assert "SSL handshake failed: certificate expired" in msgs
+
+
+_WARN = ("WARN", "ERROR")
+
+
+@pytest.mark.unit
+def test_n6_lead_overlaps_incident_leads() -> None:
+    """N6 leads span 10-60 min, so precursor length cannot separate it from incidents."""
+    leads = [negative_shape("N6", np.random.default_rng(s)).lead_minutes for s in range(200)]
+    assert min(leads) >= 10 and max(leads) <= 60
+    assert sum(lead >= 20 for lead in leads) / len(leads) > 0.6
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("code", ["N4", "N5"])
+def test_n4_n5_sometimes_slow_pre_drift(code: str) -> None:
+    """Some N4/N5 draws drift up for 20-60 min before the blip (FP 1.4 F4: no free lead)."""
+    shapes = [negative_shape(code, np.random.default_rng(s)) for s in range(200)]
+    drift = [s for s in shapes if s.lead_minutes >= 20]
+    assert 0.25 <= len(drift) / len(shapes) <= 0.75
+    for s in drift:
+        pre = s.u_offset[: s.onset_index]
+        assert _rho(pre[-20:]) >= 0.6
+        assert pre.max() < 1.0
+        assert s.u_offset[s.onset_index] == pytest.approx(1.0)
+    short = [s for s in shapes if s.lead_minutes < 20]
+    assert short and all(s.lead_minutes <= 3 for s in short)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("code", ["N1", "N6"])
+def test_n1_n6_always_have_a_warn_precursor(code: str) -> None:
+    for seed in SEEDS:
+        s = negative_shape(code, np.random.default_rng(seed))
+        assert any(t.level in _WARN and t.offset_min < 0 for t in s.log_templates), seed
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("code", ["N4", "N5"])
+def test_n4_n5_sometimes_have_a_warn_precursor(code: str) -> None:
+    hits = [
+        any(t.level in _WARN and t.offset_min < 0 for t in s.log_templates)
+        for s in (negative_shape(code, np.random.default_rng(x)) for x in range(200))
+    ]
+    assert 0.25 <= sum(hits) / len(hits) <= 0.75
+
+
+@pytest.mark.unit
+def test_negative_warn_templates_reuse_incident_template_ids() -> None:
+    inc_ids = {
+        t.template_id
+        for c in INCIDENT_CODES
+        for t in precursor_shape(c, np.random.default_rng(0)).log_templates
+        if t.level in _WARN
+    }
+    for code in ("N1", "N4", "N5", "N6"):
+        for seed in range(50):
+            for t in negative_shape(code, np.random.default_rng(seed)).log_templates:
+                if t.level in _WARN and t.offset_min < 0:
+                    assert t.template_id in inc_ids, (code, t.template_id)
+
+
+@pytest.mark.unit
+def test_noise_templates_are_incident_templates_without_rc_cert() -> None:
+    assert NOISE_TEMPLATES
+    ids = {t.template_id for t in NOISE_TEMPLATES}
+    assert "ssl_handshake_cert_expired" not in ids
+    assert {"hikari_timeout", "ibft_rc91", "gc_overhead"} <= ids
+    assert all(t.level in _WARN for t in NOISE_TEMPLATES)
+
+
+@pytest.mark.unit
+def test_deploy_event_id_is_opaque_and_stable() -> None:
+    a = deploy_event_id("PaymentGateway", datetime(2026, 8, 3, 10, 5))
+    assert a == deploy_event_id("PaymentGateway", datetime(2026, 8, 3, 10, 5))
+    assert a != deploy_event_id("PaymentGateway", datetime(2026, 8, 3, 10, 6))
+    assert re.fullmatch(r"deploy_[0-9a-f]{8}", a)

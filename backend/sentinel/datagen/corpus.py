@@ -6,7 +6,7 @@ and the runbooks. Evaluation rule: unless ``include_test`` is set, only train-sp
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import cache, lru_cache
 from pathlib import Path
 from typing import Literal
@@ -36,6 +36,13 @@ _BENIGN = {
     "N5": "transient spike that self-resolved within minutes with no error signal",
     "N6": "unexplained: no calendar, deploy or maintenance evidence, it recovered on its own",
 }
+
+
+_FA_DURATION_MIN = 10  # false alarms self-resolve quickly
+
+# doc_id -> naive wall time the episode ended (onset + estimated duration). A postmortem only
+# exists once the episode is over; ``MemoryDoc.ts`` stays the onset for display.
+_CLOSED_AT: dict[str, datetime] = {}
 
 
 @cache
@@ -81,9 +88,12 @@ def _false_alarm_doc(a: EpisodeAssignment) -> MemoryDoc:
 
 
 def _doc(a: EpisodeAssignment, text: str, fix: str) -> MemoryDoc:
+    onset = datetime.fromisoformat(a.onset_ts)
+    minutes = _DURATION_MIN[a.code] if a.kind == "incident" else _FA_DURATION_MIN
+    _CLOSED_AT[a.episode_id] = onset + timedelta(minutes=minutes)
     return MemoryDoc(
         doc_id=a.episode_id,
-        ts=datetime.fromisoformat(a.onset_ts),
+        ts=onset,
         code=a.code,
         service=a.service,
         text=text,
@@ -115,7 +125,14 @@ def corpus(
 def docs_before(
     ts: datetime, exclude_id: str | None = None, include_test: bool = False
 ) -> list[MemoryDoc]:
-    """Docs strictly earlier than ``ts`` (no future leakage), excluding ``exclude_id``."""
+    """Docs whose episode had ended strictly before ``ts`` (no future or in-flight leakage).
+
+    Docs are naive (CSV wall time); a tz-aware ``ts`` (CES/EventClock are UTC) is reduced to its
+    naive wall-clock fields. ``exclude_id`` is dropped.
+    """
+    ts = ts.replace(tzinfo=None)
     return [
-        d for d in corpus("all", include_test=include_test) if d.ts < ts and d.doc_id != exclude_id
+        d
+        for d in corpus("all", include_test=include_test)
+        if _CLOSED_AT[d.doc_id] < ts and d.doc_id != exclude_id
     ]

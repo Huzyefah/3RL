@@ -16,6 +16,7 @@ Every function takes the ``numpy.random.Generator`` it draws from; nothing reads
 
 from __future__ import annotations
 
+import hashlib
 import math
 from dataclasses import dataclass
 from datetime import datetime
@@ -53,6 +54,9 @@ LEAD_WINDOWS: dict[str, tuple[int, int]] = {
 _NOISE_SD = 0.015
 _DEPENDANT_LAG = (5, 15)  # FP 5: dependants get a sympathetic ramp 5-15 min later
 _DEPLOY_CONFOUNDER_P = 0.25  # FP 3.4: 25% of RC-DBPOOL / RC-MEMLEAK follow a causing deploy
+# Anti-leakage (FP 1.4 F4): share of N4/N5 draws with a slow pre-drift, and with a WARN precursor.
+_PRE_DRIFT_P = 0.5
+_NEG_WARN_P = 0.5
 
 
 class LogTemplate(NamedTuple):
@@ -88,6 +92,17 @@ class Shape:
 def render_log(template: LogTemplate, *, bank: str = "BANK_A", provider: str = "P1") -> str:
     """Fill a template's placeholders. Templates carry masked/fictional identifiers only."""
     return template.message.format(bank=bank, provider=provider)
+
+
+def deploy_event_id(service: str, ts: datetime) -> str:
+    """Opaque, stable id for a deploy event: no episode id or label leaks into it."""
+    digest = hashlib.sha1(f"{service}|{ts:%Y-%m-%dT%H:%M}".encode()).hexdigest()
+    return f"deploy_{digest[:8]}"
+
+
+def deploy_text(service: str, ts: datetime) -> str:
+    """Uniform text for every deploy (causing, N4 and background alike)."""
+    return f"Rolling deploy of {service} build {ts:%Y.%m.%d-%H%M}"
 
 
 # --- curve primitives (x runs 0..1 over the precursor) ---------------------------------------
@@ -309,6 +324,7 @@ def negative_shape(code: str, rng: np.random.Generator) -> Shape:
                 LogTemplate(
                     -lead // 2, "traffic_surge", "Traffic surge: TPS above daily baseline", "INFO"
                 ),
+                _HIKARI_WARN._replace(offset_min=-max(1, lead // 3)),
             ),
             co_metrics=("tps", "latency_p99", "queue_depth", "cpu_usage"),
             benign_evidence=("calendar",),
@@ -373,11 +389,12 @@ def negative_shape(code: str, rng: np.random.Generator) -> Shape:
             event_kinds=("cron",),
             calendar_kinds=("eod_settlement",),
         )
-    if code == "N4":  # deploy blip: p99 bump for 5-10 min, then recovery
+    if code == "N4":  # deploy blip: p99 bump for 5-10 min, then recovery (some with a pre-drift)
         total = int(rng.integers(5, 11))
         lead = int(rng.integers(1, 3))
         decay = np.linspace(1.0, rng.uniform(0.1, 0.3), total - lead)
         u = _finish(rng, _segments(np.linspace(0.0, 1.0, lead + 1)[:-1], decay), lead)
+        u, lead = _pre_drift(rng, u, lead)
         return Shape(
             code,
             "negative",
@@ -388,8 +405,12 @@ def negative_shape(code: str, rng: np.random.Generator) -> Shape:
             (0, 0),
             (
                 LogTemplate(
-                    -lead, "deploy_warmup", "Deployment rollout complete; warming caches", "INFO"
+                    -min(lead, 2),
+                    "deploy_warmup",
+                    "Deployment rollout complete; warming caches",
+                    "INFO",
                 ),
+                *_maybe_warn(rng, lead),
             ),
             co_metrics=("latency_p99",),
             benign_evidence=("deploy_log", "recovering_trend"),
@@ -406,11 +427,20 @@ def negative_shape(code: str, rng: np.random.Generator) -> Shape:
         u[:lead] = np.minimum(u[:lead], 0.9)
         u[lead + touch :] = np.minimum(u[lead + touch :], 0.9)
         u.setflags(write=False)
+        u, lead = _pre_drift(rng, u, lead)
         return Shape(
-            code, "negative", u, lead, lead, 0, (0, 0), (), benign_evidence=("recovering_trend",)
+            code,
+            "negative",
+            u,
+            lead,
+            lead,
+            0,
+            (0, 0),
+            _maybe_warn(rng, lead),
+            benign_evidence=("recovering_trend",),
         )
     if code == "N6":  # unexplained CRITICAL excursion; no benign evidence anywhere
-        lead = int(rng.integers(3, 11))
+        lead = int(rng.integers(10, 61))  # overlaps incident leads (FP 1.4 F4)
         touch = int(rng.integers(1, 5))
         rise = _x(lead) ** rng.uniform(1.0, 2.0)
         u = _finish(
@@ -420,8 +450,64 @@ def negative_shape(code: str, rng: np.random.Generator) -> Shape:
             ),
             lead,
         )
-        return Shape(code, "negative", u, lead, lead, int(rng.integers(0, 4)), (0, 0), ())
+        warn = _GENERIC_WARN[int(rng.integers(len(_GENERIC_WARN)))]
+        logs = (warn._replace(offset_min=-max(1, lead // 2)),)
+        return Shape(code, "negative", u, lead, lead, int(rng.integers(0, 4)), (0, 0), logs)
     raise ValueError(f"unknown negative code {code!r}")
+
+
+def _pre_drift(rng: np.random.Generator, u: np.ndarray, onset: int) -> tuple[np.ndarray, int]:
+    """With probability ``_PRE_DRIFT_P``, prepend a slow 20-60 min drift up to 0.35-0.6.
+
+    So a long rising precursor is not an incident-only feature (FP 1.4 F4). The pre-onset part
+    of ``u`` is lifted to the drift level so the series does not drop back before the blip.
+    Draws the same number of variates either way.
+    """
+    hit = rng.random() < _PRE_DRIFT_P
+    n = int(rng.integers(20, 61))
+    level, power = rng.uniform(0.35, 0.6), rng.uniform(1.0, 1.6)
+    noise = rng.normal(0.0, _NOISE_SD, n)
+    if not hit:
+        return u, onset
+    drift = np.clip(level * _x(n)[:-1] ** power + noise, 0.0, 0.9)
+    drift[0] = 0.0
+    body = u.copy()
+    body[:onset] = np.maximum(body[:onset], level)
+    out = np.concatenate([drift, body])
+    out.setflags(write=False)
+    return out, onset + n
+
+
+def _maybe_warn(rng: np.random.Generator, lead: int) -> tuple[LogTemplate, ...]:
+    """With probability ``_NEG_WARN_P``, one incident-looking WARN line before onset."""
+    hit = rng.random() < _NEG_WARN_P
+    tpl = _GENERIC_WARN[int(rng.integers(len(_GENERIC_WARN)))]
+    return (tpl._replace(offset_min=-max(1, lead // 2)),) if hit else ()
+
+
+_HIKARI_WARN = LogTemplate(
+    0, "hikari_pool_stats", "HikariPool-1 - Pool stats (active=48, idle=2, waiting=17)", "WARN"
+)
+_GENERIC_WARN: tuple[LogTemplate, ...] = (
+    _HIKARI_WARN,
+    LogTemplate(0, "gc_overhead", "GC overhead high: old gen not reclaimed after full GC", "WARN"),
+)
+
+
+def _noise_templates() -> tuple[LogTemplate, ...]:
+    seen: dict[str, LogTemplate] = {}
+    for code in INCIDENT_CODES:
+        if code == "RC-CERT":  # D7: RC-CERT's novel template must stay novel
+            continue
+        for t in _incident_logs(code, 10):
+            if t.level in ("WARN", "ERROR") and t.template_id not in seen:
+                seen[t.template_id] = t._replace(offset_min=0)
+    return tuple(seen.values())
+
+
+# WARN/ERROR incident templates the generator scatters as background noise (FP 1.4 F4): the same
+# template ids appear outside episodes, so "a WARN/ERROR line nearby" is never a free label.
+NOISE_TEMPLATES: tuple[LogTemplate, ...] = _noise_templates()
 
 
 # --- counts and seasonality ------------------------------------------------------------------

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
+
+import pytest
 
 from sentinel.datagen.corpus import corpus, docs_before
 from sentinel.redact import contains_pii
+
+pytestmark = pytest.mark.unit
 
 RUNBOOKS = Path(__file__).resolve().parents[2] / "data" / "runbooks"
 
@@ -69,7 +73,10 @@ def test_false_alarm_docs_explain_benign_mechanism():
     t = docs["FA-0010"].text
     assert "false alarm" in t.lower() and "azadi_sale_0814" in t
     assert "unexplained" in docs["FA-0009"].text
-    assert "deploy_FA-0003" in docs["FA-0003"].text
+    from sentinel.datagen.episode_map import load_episode_map
+
+    fa3 = next(a for a in load_episode_map() if a.episode_id == "FA-0003")
+    assert fa3.benign_evidence and fa3.benign_evidence[0] in docs["FA-0003"].text
     assert "transient" in docs["FA-0001"].text
 
 
@@ -78,3 +85,24 @@ def test_cascade_doc_mentions_upstream():
     t = docs["INC-0002"].text
     assert docs["INC-0002"].service == "PaymentGateway"
     assert "AuthService" in t and "pool" in t
+
+
+def test_docs_before_accepts_tz_aware_ts():
+    naive = docs_before(datetime(2026, 8, 5, 8, 12))
+    aware = docs_before(datetime(2026, 8, 5, 8, 12, tzinfo=UTC))
+    assert aware == naive and aware
+
+
+def test_doc_not_visible_while_episode_still_running():
+    # INC-0001 onset 10:38, estimated 25 min -> closes 11:03; doc.ts stays the onset.
+    docs = {d.doc_id: d for d in corpus("all", include_test=True)}
+    assert docs["INC-0001"].ts == datetime(2026, 8, 1, 10, 38)
+    ids = lambda ts: {d.doc_id for d in docs_before(ts, include_test=True)}  # noqa: E731
+    assert "INC-0001" not in ids(datetime(2026, 8, 1, 10, 50))
+    assert "INC-0001" not in ids(datetime(2026, 8, 1, 10, 59))  # cascade child's onset
+    assert "INC-0001" in ids(datetime(2026, 8, 1, 11, 4))
+
+
+def test_cascade_child_cannot_recall_parent_before_parent_end():
+    child = next(d for d in corpus("all", include_test=True) if d.doc_id == "INC-0002")
+    assert "INC-0001" not in {d.doc_id for d in docs_before(child.ts, include_test=True)}
