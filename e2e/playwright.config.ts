@@ -18,8 +18,8 @@ export default defineConfig({
   },
   webServer: local
     ? [
-        { command: "make -C .. dev-api", url: "http://localhost:8080/healthz", reuseExistingServer: true, timeout: 120_000 },
-        { command: "make -C .. dev-sim", url: "http://localhost:8081/healthz", reuseExistingServer: true, timeout: 120_000 },
+        { command: "make -C .. dev-api", url: "http://localhost:8080/health", reuseExistingServer: true, timeout: 120_000 },
+        { command: "make -C .. dev-sim", url: "http://localhost:8081/health", reuseExistingServer: true, timeout: 120_000 },
         { command: "make -C .. dev-web", url: "http://localhost:3000", reuseExistingServer: true, timeout: 180_000 },
       ]
     : undefined,

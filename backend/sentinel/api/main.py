@@ -19,6 +19,8 @@ def _csv_rows() -> int:
         return 0
 
 
-@app.get("/healthz")
+# Cloud Run reserves some paths ending in "z" (e.g. /healthz), so /health is canonical; /healthz is local-only.
+@app.get("/health")
+@app.get("/healthz", include_in_schema=False)
 def healthz() -> dict:
     return {"status": "ok", "service": "sentinel-api", "env": settings.env, "csv_rows": _csv_rows()}

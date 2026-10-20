@@ -44,7 +44,7 @@ make deploy-api | deploy-sim | deploy-web
 - Pre-existing Cloud Run services `gcp-openai-demo` and `mda-atomcamp` must never be touched.
 
 ## Global decisions (from the audited plan)
-- **Build:** `gcloud builds submit` runs from the repo root (no local Docker), then `gcloud run deploy --image`. `/healthz` reports `csv_rows=500`.
+- **Build:** `gcloud builds submit` runs from the repo root (no local Docker), then `gcloud run deploy --image`. `/health` reports `csv_rows=500`.
 - **Browser → web → api:** the browser talks only to `sentinel-web`. The web proxy adds a Google ID token, plus the operator token on mutating calls, which lives server-side only. The api is reachable only by `sa-web` and `sa-push` (Pub/Sub OIDC), and the sim only by `sa-api`.
 - **Replay** runs in-process (InMemoryBus) and is mirrored to Pub/Sub. Only the sim emitter uses push, with a reorder buffer and `event_id` dedupe.
 - **Time:** `sentinel/clock.py` provides a sim/wall Clock. Re-checks, expiry, TTL, verification and cooldowns all use it.
@@ -57,7 +57,7 @@ make deploy-api | deploy-sim | deploy-web
 3. **Evidence path:** `docs/test-evidence/phase-NN-<slug>/<flow-slug>/NN-<step>.png`, made with `flowEvidence()` in `e2e/utils/evidence.ts`, or as matplotlib PNGs. Backend flows also save `junit.xml` and raw `*.json`/`*.txt`. No tokens or webhook URLs in screenshots. Videos go to `gs://mda-atomcamp-sentinel-evidence/`, never git.
 4. `docs/test-evidence/phase-NN-<slug>/README.md` records the commands, pass/fail per flow, metrics, deviations, and a ticked gate checklist.
 5. `/simplify` every phase. `/code-review high` and `/security-review` run over the full diff at Phase 7 (P0-complete) and Phase 9.
-6. Redeploy each changed service after its phase, with a live `/healthz` smoke check.
+6. Redeploy each changed service after its phase, with a live `/health` smoke check.
 7. **Git:** branch `phase-NN-<slug>`, conventional commits, merge `--no-ff` to `main` when green. **Do not push to GitHub without asking.**
 8. Never carry a red gate forward. If a phase runs over its timebox, apply that phase's pre-written cut and record it.
 

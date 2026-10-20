@@ -5,7 +5,7 @@ async function ApiStatus() {
   let status = "unreachable";
   let csvRows: number | null = null;
   try {
-    const res = await apiFetch("/healthz");
+    const res = await apiFetch("/health");
     const body = await res.json();
     status = body.status;
     csvRows = body.csv_rows;
