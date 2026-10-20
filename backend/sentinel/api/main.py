@@ -152,7 +152,12 @@ async def demo_loop() -> None:
             while not S.autoplay or S.now_playing:
                 await asyncio.sleep(2)
             try:
-                await replay_episode(ep)
+                S.replay_task = asyncio.create_task(replay_episode(ep))
+                await S.replay_task
+            except asyncio.CancelledError:
+                if asyncio.current_task().cancelling():
+                    raise  # the server is shutting down
+                # otherwise the replay was interrupted by a manual replay: carry on
             except Exception as e:  # noqa: BLE001 — keep the demo alive
                 print("replay error", ep, e)
             await asyncio.sleep(20)
@@ -462,9 +467,12 @@ async def demo_replay(episode_id: str, x_operator_token: str | None = Header(def
     _check_token(x_operator_token)
     if not any(e.id == episode_id for e in S.ds.episodes):
         raise HTTPException(404, "unknown episode")
-    if S.now_playing:
-        raise HTTPException(409, f"already replaying {S.now_playing}")
-    asyncio.create_task(replay_episode(episode_id))
+    # A manual replay pauses autoplay and interrupts whatever is playing, so the presenter is never blocked.
+    S.autoplay = False
+    if S.replay_task and not S.replay_task.done():
+        S.replay_task.cancel()
+        await asyncio.sleep(0.2)
+    S.replay_task = asyncio.create_task(replay_episode(episode_id))
     return {"started": episode_id}
 
 

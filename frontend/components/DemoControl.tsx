@@ -63,7 +63,7 @@ export function DemoControl() {
   };
   const replay = async (id: string) => {
     const r = await call(`/demo/replay?episode_id=${encodeURIComponent(id)}`, { method: "POST" });
-    setMsg(r.ok ? `Replaying ${id} through the real detector → agents. Watch Live Ops.` : `Replay refused (${r.status}): ${r.body?.detail ?? ""}`);
+    setMsg(r.ok ? `Replaying ${id} through the real detector → agents (autoplay paused). Watch Live Ops.` : `Replay refused (${r.status}): ${r.body?.detail ?? ""}`);
     refresh();
   };
   const reset = async () => {
@@ -243,7 +243,6 @@ export function DemoControl() {
                     <button
                       type="button"
                       data-testid={`replay-${e.id}`}
-                      disabled={!!playing}
                       onClick={() => replay(e.id)}
                       className="rounded-md bg-foreground px-3 py-1 text-xs font-semibold text-background disabled:opacity-40"
                     >
