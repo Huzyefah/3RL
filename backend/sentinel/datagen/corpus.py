@@ -35,8 +35,17 @@ SYMPTOMS = {
     "N6": "a short excursion with no corroborating evidence",
 }
 RUNBOOKS = {
-    "RC-BANK": ["Confirm the segment (bank) breakdown", "Check Raast health (u < 0.75)", "Request reroute_bank (HITL)", "Notify partner-bank NOC"],
-    "RC-DBPOOL": ["Check recent deploys", "Inspect slow-query log", "Request scale_service or rollback (HITL)"],
+    "RC-BANK": [
+        "Confirm the segment (bank) breakdown",
+        "Check Raast health (u < 0.75)",
+        "Request reroute_bank (HITL)",
+        "Notify partner-bank NOC",
+    ],
+    "RC-DBPOOL": [
+        "Check recent deploys",
+        "Inspect slow-query log",
+        "Request scale_service or rollback (HITL)",
+    ],
     "RC-OTP-PROVIDER": ["Compare P1 vs P2 delivery", "Check P2 health", "Request otp_failover (HITL)"],
     "RC-QUEUE": ["Project lag drain vs 16:00 cut-off", "Request scale consumers (HITL)", "Warn finance ops"],
     "RC-MEMLEAK": ["Confirm linear memory ramp", "Request restart (HITL)", "Open engineering ticket"],

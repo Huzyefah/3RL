@@ -48,4 +48,6 @@ class HoltState:
         if self.n < self.warmup or self.streak < 5 or self.trend <= 0 or self.level is None:
             return False
         sigma = math.sqrt(self.var)
-        return any(self.level + h * self.trend - z * sigma * sh >= target for h, sh in zip(H[:horizon], SQRT_H))
+        return any(
+            self.level + h * self.trend - z * sigma * sh >= target for h, sh in zip(H[:horizon], SQRT_H)
+        )

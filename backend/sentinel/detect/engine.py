@@ -137,9 +137,16 @@ class Emitter:
 class DetectorEngine:
     """Live driver. Call `step(ts, points)` once per minute (or per envelope) with that minute's points."""
 
-    def __init__(self, config: str = "S2", tau: float = 0.5, topo: Topology | None = None) -> None:
+    def __init__(
+        self,
+        config: str = "S2",
+        tau: float = 0.5,
+        topo: Topology | None = None,
+        tau_offsets: dict[str, float] | None = None,
+    ) -> None:
         assert config in CONFIGS
         self.config, self.tau = config, tau
+        self.tau_offsets = tau_offsets if tau_offsets is not None else {}  # 👎 feedback raises τ per service
         self.topo = topo or Topology.load()
         self.states: dict[SeriesKey, SeriesState] = {}
         self.corrob = Corroboration(self.topo)
@@ -185,7 +192,8 @@ class DetectorEngine:
             )
             sig["risk"] = r
             self.last_signal[key] = sig
-            if self.emitter.update(key, fires(self.config, key, sig, r, self.tau, infra), t):
+            tau = self.tau + self.tau_offsets.get(key[0], 0.0)
+            if self.emitter.update(key, fires(self.config, key, sig, r, tau, infra), t):
                 out.append(_candidate(ts, key, sig))
         return out
 

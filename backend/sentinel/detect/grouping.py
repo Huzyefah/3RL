@@ -47,6 +47,7 @@ class Grouper:
 
     def _reroot(self, inc: IncidentCandidate) -> None:
         services = [inc.root_service, *inc.symptom_services]
+
         # Root = the service most of the group depends on (directly); ties keep the earliest.
         def upstream_score(s: str) -> int:
             return sum(s in self.topo.depends_on(o) for o in services if o != s)
@@ -71,7 +72,14 @@ def group_alerts(alerts: list[dict], topo: Topology | None = None) -> list[dict]
     g = Grouper(topo)
     out: dict[str, dict] = {}
     for a in sorted(alerts, key=lambda x: x["ts"]):
-        c = Candidate(ts=a["ts"], service=a["service"], metric=a["metric"], segment_key=a["segment"], u=0, risk=a["risk"])
+        c = Candidate(
+            ts=a["ts"],
+            service=a["service"],
+            metric=a["metric"],
+            segment_key=a["segment"],
+            u=0,
+            risk=a["risk"],
+        )
         inc, new = g.add(c)
         if new:
             out[inc.id] = dict(a, members=[a["service"]])

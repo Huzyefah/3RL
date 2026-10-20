@@ -96,7 +96,7 @@ export function IncidentView({ initial }: { initial: IncidentDetail }) {
           {rca && <Similar rca={rca} />}
           {rca && <Comms rca={rca} />}
           {rca && <IfIgnored rca={rca} />}
-          <Feedback />
+          <Feedback incidentId={id} />
         </div>
         <div className="min-w-0 lg:col-span-2">
           <TraceTimeline steps={trace} />
@@ -262,27 +262,44 @@ function IfIgnored({ rca }: { rca: RCA }) {
   );
 }
 
-function Feedback() {
+function Feedback({ incidentId }: { incidentId: string }) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
-  const btn = (k: "up" | "down", label: string, icon: ReactNode) => (
+  const [note, setNote] = useState<string>("");
+  // Feedback closes the loop: 👎 raises the detector threshold for this service, 👍 stores the RCA in RAG memory.
+  const send = async (k: "up" | "down") => {
+    setVote(k);
+    const res = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ incident_id: incidentId, kind: k }),
+    });
+    const body = await res.json().catch(() => ({}));
+    setNote(res.ok ? body.note ?? "Thanks — feedback recorded." : `Feedback failed (${res.status})`);
+  };
+  const btn = (k: "up" | "down", label: string) => (
     <button
       type="button"
       data-testid={`feedback-${k}`}
       aria-pressed={vote === k}
-      onClick={() => setVote(vote === k ? null : k)}
+      onClick={() => send(k)}
       className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold ${
         vote === k ? "border-foreground bg-foreground text-background" : "border-line-strong hover:bg-surface-2"
       }`}
     >
-      {icon} {label}
+      {label}
     </button>
   );
   return (
     <Panel title="Was this RCA useful?" icon={Icon.info()} testid="feedback">
       <div className="flex gap-2 p-3">
-        {btn("up", "👍 Useful", null)}
-        {btn("down", "👎 Not useful", null)}
+        {btn("up", "👍 Useful")}
+        {btn("down", "👎 Not useful")}
       </div>
+      {note && (
+        <p data-testid="feedback-note" className="px-3 pb-3 text-xs text-muted">
+          {note}
+        </p>
+      )}
     </Panel>
   );
 }

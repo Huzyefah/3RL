@@ -38,7 +38,8 @@ COMMANDER_SYS = (
     "Write the RCA as JSON with keys: headline, severity (P1|P2|P3), hypotheses [{code, confidence, statement, "
     "evidence_ids}], summary_technical (<=80 words, for the on-call engineer), summary_business (<=50 words, for the "
     "payments-ops lead), runbook_steps [str], comms_draft {in_app_banner, bank_partner_note}, if_ignored. Codes: "
-    "RC-BANK, RC-DBPOOL, RC-OTP-PROVIDER, RC-QUEUE, RC-MEMLEAK, RC-AUTH-ATTACK, RC-CERT, RC-ABRUPT. Every claim "
+    "RC-BANK, RC-DBPOOL, RC-OTP-PROVIDER, RC-QUEUE, RC-MEMLEAK, RC-AUTH-ATTACK, RC-CERT, RC-ABRUPT. Use the retrieved "
+    "memory evidence (past postmortems and runbooks) to ground runbook_steps and cite its evidence_id. Every claim "
     "must cite evidence_ids that appear in the evidence. PKR figures are estimates; copy them from the impact tool."
 )
 
@@ -292,20 +293,29 @@ async def run_incident(
 
     # --- Memory + impact + RCA -------------------------------------------------------------------------
     code_guess = _rc_guess(inc, seg_ev, logs)
-    mem_ev = await r.tool(
+    # RAG: retrieve past postmortems + runbooks; injected into the Commander prompt as cited context.
+    query = f"{code_guess} {svc} {c.metric} " + " ".join(t["template"] for t in logs["novel_templates"])
+    hits, how = await mem.search(query, svc, k=4, use_embeddings=r.mode == "live")
+    rag_hits = [
+        {
+            "id": d.id,
+            "kind": d.kind,
+            "code": d.code,
+            "similarity": round(float(sim), 2),
+            "title": d.title,
+            "text": d.text[:400],
+            "fix": d.fix,
+        }
+        for d, sim in hits
+    ]
+    mem_ev = T._wrap("memory", {"query_service": svc, "retrieval": how, "hits": rag_hits}, ctx.evidence)
+    mem_ev["hits"] = [h for h in rag_hits if h["kind"] != "runbook" and h["similarity"] >= 0.2]
+    await r.trace_step(
         "commander",
-        "recall_similar",
-        lambda ctx, *a: T.recall_similar(ctx, mem, *a),
-        f"{code_guess} {svc} {c.metric} " + " ".join(t["template"] for t in logs["novel_templates"]),
-        svc,
-        summary=lambda x: (
-            (
-                "recall_similar: "
-                + "; ".join(f"{h['id']} {h['similarity']:.0%} ({h['code']})" for h in x["hits"])
-            )
-            if x["hits"]
-            else "No similar past incidents above 0.2."
-        ),
+        "tool_call",
+        f"RAG ({how}): " + "; ".join(f"{h['id']} {h['similarity']:.0%} [{h['kind']}]" for h in rag_hits),
+        tool="rag_retrieve",
+        evidence_id=mem_ev["evidence_id"],
     )
     imp = await r.tool(
         "commander",

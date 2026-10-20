@@ -25,6 +25,7 @@ from sentinel.datagen.generator import BANK_WEIGHTS, INFRA_METRICS, build
 from sentinel.detect.engine import DetectorEngine
 from sentinel.detect.grouping import Grouper
 from sentinel.impact.business import AVG_TICKET_PKR, FAILURE_RATE_BY_TIER
+from sentinel.memory.rag import Doc, RagStore
 from sentinel.redact import assert_no_pii
 from sentinel.schemas import band
 from sentinel.topology import Topology
@@ -56,7 +57,7 @@ class State:
     def __init__(self) -> None:
         self.topo = Topology.load()
         self.ds = build("ps02")
-        self.mem = T.Memory()
+        self.mem = RagStore()
         self.broker = Broker()
         self.incidents: dict[str, dict] = {}
         self.details: dict[str, dict] = {}
@@ -74,6 +75,8 @@ class State:
             "autonomy_mode": "shadow",
         }
         self.leads: list[float] = []
+        self.tau_offsets: dict[str, float] = {}  # learned from 👎 feedback, capped at +0.15
+        self.feedback: list[dict] = []
         self.llm_mode = os.environ.get("LLM_MODE", "live" if settings.openai_api_key else "off")
         self.speed = float(os.environ.get("REPLAY_SPEED", "20"))
         self.replay_task: asyncio.Task | None = None
@@ -176,7 +179,7 @@ async def replay_episode(episode_id: str) -> None:
 
 async def _replay(ds, episode_id: str, episode_window) -> None:
     start, end = episode_window(ds, episode_id, before_min=45, after_min=10)
-    eng = DetectorEngine("S2", tau=TAU, topo=S.topo)
+    eng = DetectorEngine("S2", tau=TAU, topo=S.topo, tau_offsets=S.tau_offsets)
     grouper = Grouper(S.topo)
     logs_by_min: dict[int, set[str]] = {}
     for r in ds.logs.itertuples():
@@ -413,13 +416,58 @@ async def act(action_id: str, verb: str, x_operator_token: str | None = Header(d
 
 class Feedback(BaseModel):
     incident_id: str
-    kind: str
+    kind: str  # up | down
 
 
 @app.post("/feedback")
-def feedback(fb: Feedback, x_operator_token: str | None = Header(default=None)) -> dict:
+async def feedback(fb: Feedback, x_operator_token: str | None = Header(default=None)) -> dict:
+    """Closes the loop: 👎 raises τ for the root service (+0.05, cap +0.15) so it pages less; 👍 stores the
+    confirmed RCA in RAG memory so future incidents retrieve it."""
     _check_token(x_operator_token)
-    return {"ok": True}
+    det = S.details.get(fb.incident_id)
+    if det is None or fb.kind not in ("up", "down"):
+        raise HTTPException(404, "unknown incident or kind")
+    svc = det["incident"]["root_service"]
+    out = {"ok": True, "kind": fb.kind, "service": svc}
+    if fb.kind == "down":
+        S.tau_offsets[svc] = round(min(0.15, S.tau_offsets.get(svc, 0.0) + 0.05), 2)
+        out["tau"] = round(TAU + S.tau_offsets[svc], 2)
+        note = f"Feedback 👎: detector τ for {svc} raised to {out['tau']} (learned from operator feedback)."
+    else:
+        rca = det.get("rca") or {}
+        hyp = (rca.get("hypotheses") or [{}])[0]
+        n = await S.mem.add(
+            Doc(
+                id=f"FB-{fb.incident_id}",
+                kind="feedback",
+                code=hyp.get("code", ""),
+                service=svc,
+                title=rca.get("headline", fb.incident_id),
+                text=rca.get("summary_technical", ""),
+                fix="; ".join(rca.get("runbook_steps", [])[:3]),
+            )
+        )
+        out["memory_docs"] = n
+        note = f"Feedback 👍: RCA stored in RAG memory ({n} documents); future incidents can retrieve it."
+    S.feedback.append({**out, "incident_id": fb.incident_id, "ts": datetime.now(UTC).isoformat()})
+    trace = det["trace"]
+    st = {
+        "incident_id": fb.incident_id,
+        "step": len(trace) + 1,
+        "ts": datetime.now(UTC).isoformat(),
+        "agent": "commander",
+        "kind": "note",
+        "tool": "feedback",
+        "args": {"kind": fb.kind},
+        "summary": note,
+        "evidence_id": None,
+        "tokens": 0,
+        "latency_ms": 0,
+    }
+    trace.append(st)
+    await S.broker.publish({"type": "trace", "step": st})
+    out["note"] = note
+    return out
 
 
 @app.get("/scorecard")
@@ -436,8 +484,18 @@ class PolicyUpdate(BaseModel):
 
 @app.get("/policy")
 def get_policy() -> dict:
-    return {"llm_mode": S.llm_mode, "autonomy_mode": S.kpis["autonomy_mode"], "tau": TAU, "autoplay": S.autoplay,
-            "speed": S.speed, "now_playing": S.now_playing}
+    return {
+        "llm_mode": S.llm_mode,
+        "autonomy_mode": S.kpis["autonomy_mode"],
+        "tau": TAU,
+        "autoplay": S.autoplay,
+        "speed": S.speed,
+        "now_playing": S.now_playing,
+        "tau_offsets": S.tau_offsets,
+        "memory_docs": len(S.mem.docs),
+        "rag": "embeddings" if S.mem.embedded else "tfidf",
+        "feedback_count": len(S.feedback),
+    }
 
 
 @app.put("/policy")
@@ -457,9 +515,21 @@ def put_policy(p: PolicyUpdate, x_operator_token: str | None = Header(default=No
 @app.get("/demo/episodes")
 def demo_episodes() -> list[dict]:
     """PS-02 episodes (incidents and hard negatives) available for replay. Ground-truth codes are shown for the demo."""
-    return [{"id": e.id, "kind": e.kind, "code": e.code, "service": e.service, "metric": e.metric, "segment": e.segment,
-             "onset": e.onset.isoformat(), "abrupt": e.abrupt, "lead_min": e.lead_min,
-             "split": "test" if e.onset.day >= 21 else "train"} for e in S.ds.episodes]
+    return [
+        {
+            "id": e.id,
+            "kind": e.kind,
+            "code": e.code,
+            "service": e.service,
+            "metric": e.metric,
+            "segment": e.segment,
+            "onset": e.onset.isoformat(),
+            "abrupt": e.abrupt,
+            "lead_min": e.lead_min,
+            "split": "test" if e.onset.day >= 21 else "train",
+        }
+        for e in S.ds.episodes
+    ]
 
 
 @app.post("/demo/replay")

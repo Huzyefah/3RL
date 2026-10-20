@@ -27,6 +27,7 @@ from sentinel.detect.engine import Signals, compute_signals, emit
 from sentinel.detect.grouping import Grouper
 from sentinel.eval import splits
 from sentinel.eval.scorer import match, score
+from sentinel.memory.rag import RagStore
 from sentinel.schemas import Candidate
 from sentinel.topology import Topology
 
@@ -78,7 +79,7 @@ async def evaluate(mode: str, tau: float, concurrency: int = 6, split: str = "te
     lo, hi = splits.PS02_TEST if split == "test" else splits.PS02_TRAIN
     sig = compute_signals(ds, lo, hi)
     topo = Topology.load()
-    mem = T.Memory()  # train-split corpus only: test incidents are never recalled
+    mem = RagStore()  # train-split postmortems + runbooks: test incidents are never recalled
     groups = _groups(sig, tau, topo)
     sem = asyncio.Semaphore(concurrency)
 

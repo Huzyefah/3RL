@@ -332,7 +332,9 @@ def _sympathetic(series, topo, ep, i_pre, i_on, i_end, i_rec, rng, mask, every_m
         s = series[(svc, metric, "*")]
         a = min(i_pre + lag, i_on - 1)
         if a < i_on:
-            s.u[a:i_on] = np.maximum(s.u[a:i_on], np.linspace(s.u[a], peak, i_on - a) + rng.normal(0, 0.01, i_on - a))
+            s.u[a:i_on] = np.maximum(
+                s.u[a:i_on], np.linspace(s.u[a], peak, i_on - a) + rng.normal(0, 0.01, i_on - a)
+            )
         s.u[i_on:i_end] = np.maximum(s.u[i_on:i_end], peak + rng.normal(0, 0.01, i_end - i_on))
         if i_rec > i_end:
             s.u[i_end:i_rec] = np.maximum(s.u[i_end:i_rec], np.linspace(peak, s.u[i_rec - 1], i_rec - i_end))
@@ -404,9 +406,7 @@ def _change(ts: datetime, service: str, rng, caused: bool) -> dict:
 
 def _surge(ts: datetime, end, ep: Episode, rng) -> dict:
     name = str(
-        rng.choice(
-            ["NovaPay cashback week", "Bill-pay weekend", "Merchant QR promo", "Mobile top-up blitz"]
-        )
+        rng.choice(["NovaPay cashback week", "Bill-pay weekend", "Merchant QR promo", "Mobile top-up blitz"])
     )
     return {
         "ts": ts,

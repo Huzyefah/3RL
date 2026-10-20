@@ -53,7 +53,9 @@ def envelopes_at(ds: Dataset, i: int, source: str = "ps02_replay", grouped=None)
     return out
 
 
-def iter_envelopes(ds: Dataset, start: datetime | None = None, end: datetime | None = None) -> Iterator[list[dict]]:
+def iter_envelopes(
+    ds: Dataset, start: datetime | None = None, end: datetime | None = None
+) -> Iterator[list[dict]]:
     i0 = ds.loc(start) if start else 0
     i1 = ds.loc(end) if end else len(ds.index)
     grouped = _by_service(ds)
@@ -61,7 +63,9 @@ def iter_envelopes(ds: Dataset, start: datetime | None = None, end: datetime | N
         yield envelopes_at(ds, i, grouped=grouped)
 
 
-def episode_window(ds: Dataset, episode_id: str, before_min: int = 30, after_min: int = 15) -> tuple[datetime, datetime]:
+def episode_window(
+    ds: Dataset, episode_id: str, before_min: int = 30, after_min: int = 15
+) -> tuple[datetime, datetime]:
     ep = next(e for e in ds.episodes if e.id == episode_id)
     return ep.precursor_start - timedelta(minutes=before_min), ep.end + timedelta(minutes=after_min)
 

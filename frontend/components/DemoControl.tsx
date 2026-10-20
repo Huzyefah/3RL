@@ -17,7 +17,18 @@ type Episode = {
   lead_min: number;
   split: "train" | "test";
 };
-type Policy = { llm_mode: string; autonomy_mode: string; tau: number; autoplay: boolean; speed: number; now_playing: string | null };
+type Policy = {
+  llm_mode: string;
+  autonomy_mode: string;
+  tau: number;
+  autoplay: boolean;
+  speed: number;
+  now_playing: string | null;
+  tau_offsets?: Record<string, number>;
+  memory_docs?: number;
+  rag?: string;
+  feedback_count?: number;
+};
 
 const NEG_LABEL: Record<string, string> = {
   N1: "surge (benign)",
@@ -169,6 +180,20 @@ export function DemoControl() {
               </div>
             </div>
             <p className="text-xs text-muted">Detector threshold τ = {policy?.tau ?? "—"} (tuned on the train split only).</p>
+            <div data-testid="demo-learning" className="rounded-md border border-line bg-surface-2 p-2 text-xs">
+              <div className="font-semibold">Learning from feedback</div>
+              <div className="text-muted">
+                RAG memory: {policy?.memory_docs ?? "—"} docs ({policy?.rag ?? "—"}) · feedback received: {policy?.feedback_count ?? 0}
+              </div>
+              <div className="text-muted">
+                τ raised by 👎:{" "}
+                {policy?.tau_offsets && Object.keys(policy.tau_offsets).length
+                  ? Object.entries(policy.tau_offsets)
+                      .map(([svc, d]) => `${svc} +${d}`)
+                      .join(", ")
+                  : "none yet"}
+              </div>
+            </div>
           </div>
         </Panel>
 

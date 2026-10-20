@@ -17,9 +17,15 @@ class Impact:
     label: str = "estimate"
 
 
-def impact(segment_tps: float, failure_rate: float, minutes: float, avg_ticket_pkr: float = AVG_TICKET_PKR) -> Impact:
+def impact(
+    segment_tps: float, failure_rate: float, minutes: float, avg_ticket_pkr: float = AVG_TICKET_PKR
+) -> Impact:
     failed = segment_tps * 60 * minutes * failure_rate
-    return Impact(failed_txns=failed, gmv_at_risk_pkr=failed * avg_ticket_pkr, customers_affected_est=round(failed * 0.85))
+    return Impact(
+        failed_txns=failed,
+        gmv_at_risk_pkr=failed * avg_ticket_pkr,
+        customers_affected_est=round(failed * 0.85),
+    )
 
 
 def pkr_protected(lead_min: float, incident_min: float, gmv_per_min: float, failure_rate: float) -> float:

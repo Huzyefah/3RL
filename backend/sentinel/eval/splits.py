@@ -3,7 +3,10 @@
 from datetime import datetime
 
 PS02_TRAIN = (datetime(2026, 8, 1), datetime(2026, 8, 21))  # tune τ here
-PS02_TEST = (datetime(2026, 8, 21), datetime(2026, 8, 31, 1, 0))  # report here: 12 incidents, 9 hard negatives
+PS02_TEST = (
+    datetime(2026, 8, 21),
+    datetime(2026, 8, 31, 1, 0),
+)  # report here: 12 incidents, 9 hard negatives
 SEEDED_TRAIN = range(10)
 SEEDED_TEST = range(100, 130)
 

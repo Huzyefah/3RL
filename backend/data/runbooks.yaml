@@ -1,0 +1,41 @@
+# Runbook knowledge base for RAG (fictional NovaPay procedures). Retrieved and injected into the Commander prompt.
+runbooks:
+  - id: RB-BANK-REROUTE
+    code: RC-BANK
+    title: Partner-bank switch degradation → reroute via Raast
+    text: >-
+      Symptoms: one bank's ISO8583 RC=91 issuer-unavailable responses and timeouts rise while peer banks stay flat.
+      Steps: 1) confirm the per-bank breakdown (failing bank ≥3× peers); 2) check Raast rail health (u < 0.75 over 5 min);
+      3) request reroute_bank for that bank's IBFT traffic via Raast (HITL, expires in 10 min); 4) notify the partner-bank
+      NOC; 5) revert once the bank's switch is healthy for 15 min.
+  - id: RB-DBPOOL
+    code: RC-DBPOOL
+    title: DB connection-pool exhaustion
+    text: >-
+      Symptoms: HikariPool "Connection is not available" timeouts, convex rise in pool use, then p99 latency and errors.
+      Steps: 1) check deploys in the last 30 min (a slow query release is the usual cause); 2) inspect the slow-query log;
+      3) request scale_service or rollback (HITL); 4) raise pool size 20→40 only as a stop-gap.
+  - id: RB-OTP-FAILOVER
+    code: RC-OTP-PROVIDER
+    title: SMS/OTP provider degradation → fail over to P2
+    text: >-
+      Symptoms: OTP delivery from provider P1 falls, DLR timeouts, logins and payments stall at OTP. Steps: 1) compare P1 vs P2
+      delivery; 2) confirm P2 healthy; 3) request otp_failover to P2 (HITL); 4) open a ticket with P1; skip step-up MFA while OTP is degraded.
+  - id: RB-QUEUE
+    code: RC-QUEUE
+    title: Settlement backlog vs the 16:00 cut-off
+    text: >-
+      Symptoms: accelerating consumer lag on settlement batches, disk and latency rising. Steps: 1) project lag drain against the
+      16:00 PKT cut-off; 2) request scale consumers (HITL, max 5 instances); 3) warn finance ops if the projection still misses.
+  - id: RB-MEMLEAK
+    code: RC-MEMLEAK
+    title: Memory leak (fraud scoring / profile services)
+    text: >-
+      Symptoms: linear memory ramp, GC overhead warnings, then CPU and p99 latency. Steps: 1) confirm the linear ramp;
+      2) request a rolling restart (HITL, simulated); 3) open an engineering ticket with heap evidence; 4) fall back to rules with lower limits if fraud scoring is affected.
+  - id: RB-BENIGN-SURGE
+    code: RC-BENIGN
+    title: Known traffic surge (salary day, campaign, sale)
+    text: >-
+      Symptoms: every signal rises together during a calendar event; no failure-specific errors. Steps: watch, do not page;
+      re-check in 3 min; escalate only if failure-specific evidence appears (error templates, one segment failing vs peers).
