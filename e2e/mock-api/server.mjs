@@ -1,6 +1,6 @@
 // Mock sentinel-api for UI development and @fake E2E (no deps). Fictional data only; PKR figures are estimates.
 //   node mock-api/server.mjs            → http://localhost:8090
-//   GET  /healthz                        → {"status":"ok","service":"sentinel-api","env":"mock","csv_rows":500}
+//   GET  /healthz                        → {"status":"ok","service":"sentinel-api","env":"demo","csv_rows":500}
 //   GET  /events                         → SSE (event: message, id: <seq>, data: <json>); snapshot first, 15 s heartbeat
 //   GET  /incidents, /incidents/{id}     → IncidentSummary[] / {incident, rca, trace, actions}
 //   POST /mock/reset                     → restarts the scripted BANK_C scenario (tests call this first)
@@ -287,7 +287,7 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   const path = url.pathname.replace(/\/$/, "") || "/";
 
-  if (req.method === "GET" && path === "/healthz") return json(res, 200, { status: "ok", service: "sentinel-api", env: "mock", csv_rows: 500 });
+  if (req.method === "GET" && (path === "/healthz" || path === "/health")) return json(res, 200, { status: "ok", service: "sentinel-api", env: "demo", csv_rows: 500 });
 
   if (req.method === "GET" && path === "/events") {
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache, no-transform", connection: "keep-alive", "x-accel-buffering": "no" });

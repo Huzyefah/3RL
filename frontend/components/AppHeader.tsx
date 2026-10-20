@@ -8,7 +8,7 @@ async function ApiStatus() {
   let ok = false;
   let csvRows: number | null = null;
   try {
-    const res = await apiFetch("/healthz");
+    const res = await apiFetch("/health");
     const body = await res.json();
     ok = body.status === "ok";
     csvRows = typeof body.csv_rows === "number" ? body.csv_rows : null;
