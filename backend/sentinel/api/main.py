@@ -77,6 +77,8 @@ class State:
         self.llm_mode = os.environ.get("LLM_MODE", "live" if settings.openai_api_key else "off")
         self.speed = float(os.environ.get("REPLAY_SPEED", "20"))
         self.replay_task: asyncio.Task | None = None
+        self.autoplay = os.environ.get("AUTOPLAY", "1") == "1"
+        self.now_playing: str | None = None
 
     def snapshot(self) -> dict:
         return {
@@ -147,9 +149,11 @@ async def heartbeat() -> None:
 async def demo_loop() -> None:
     while True:
         for ep in DEMO_EPISODES:
+            while not S.autoplay or S.now_playing:
+                await asyncio.sleep(2)
             try:
                 await replay_episode(ep)
-            except Exception as e:  # keep the demo alive
+            except Exception as e:  # noqa: BLE001 — keep the demo alive
                 print("replay error", ep, e)
             await asyncio.sleep(20)
 
@@ -158,6 +162,14 @@ async def replay_episode(episode_id: str) -> None:
     from sentinel.datagen.exporters import episode_window
 
     ds = S.ds
+    S.now_playing = episode_id
+    try:
+        await _replay(ds, episode_id, episode_window)
+    finally:
+        S.now_playing = None
+
+
+async def _replay(ds, episode_id: str, episode_window) -> None:
     start, end = episode_window(ds, episode_id, before_min=45, after_min=10)
     eng = DetectorEngine("S2", tau=TAU, topo=S.topo)
     grouper = Grouper(S.topo)
@@ -268,7 +280,7 @@ async def open_incident(inc, ts: datetime, eng: DetectorEngine) -> None:
     ctx = T.ToolContext(ds=S.ds, now=ts, topo=S.topo, last_signal=dict(eng.last_signal))
     try:
         res = await run_incident(inc, ctx, S.mem, emit, S.llm_mode)
-    except Exception as e:  # I7: never silence — degrade to a classic alert
+    except Exception as e:  # noqa: BLE001 — I7: never silence, degrade to a classic alert
         print("agent error", inc.id, e)
         res = {"status": "investigating", "rca": None, "actions": []}
     headline = res["rca"]["headline"] if res["rca"] else None
@@ -413,11 +425,14 @@ def scorecard() -> dict:
 class PolicyUpdate(BaseModel):
     llm_mode: str | None = None
     autonomy_mode: str | None = None
+    autoplay: bool | None = None
+    speed: float | None = None
 
 
 @app.get("/policy")
 def get_policy() -> dict:
-    return {"llm_mode": S.llm_mode, "autonomy_mode": S.kpis["autonomy_mode"], "tau": TAU}
+    return {"llm_mode": S.llm_mode, "autonomy_mode": S.kpis["autonomy_mode"], "tau": TAU, "autoplay": S.autoplay,
+            "speed": S.speed, "now_playing": S.now_playing}
 
 
 @app.put("/policy")
@@ -427,7 +442,19 @@ def put_policy(p: PolicyUpdate, x_operator_token: str | None = Header(default=No
         S.llm_mode = p.llm_mode
     if p.autonomy_mode in ("off", "shadow", "enforce"):
         S.kpis["autonomy_mode"] = p.autonomy_mode
+    if p.autoplay is not None:
+        S.autoplay = p.autoplay
+    if p.speed is not None and 5 <= p.speed <= 240:
+        S.speed = p.speed
     return get_policy()
+
+
+@app.get("/demo/episodes")
+def demo_episodes() -> list[dict]:
+    """PS-02 episodes (incidents and hard negatives) available for replay. Ground-truth codes are shown for the demo."""
+    return [{"id": e.id, "kind": e.kind, "code": e.code, "service": e.service, "metric": e.metric, "segment": e.segment,
+             "onset": e.onset.isoformat(), "abrupt": e.abrupt, "lead_min": e.lead_min,
+             "split": "test" if e.onset.day >= 21 else "train"} for e in S.ds.episodes]
 
 
 @app.post("/demo/replay")
@@ -435,6 +462,8 @@ async def demo_replay(episode_id: str, x_operator_token: str | None = Header(def
     _check_token(x_operator_token)
     if not any(e.id == episode_id for e in S.ds.episodes):
         raise HTTPException(404, "unknown episode")
+    if S.now_playing:
+        raise HTTPException(409, f"already replaying {S.now_playing}")
     asyncio.create_task(replay_episode(episode_id))
     return {"started": episode_id}
 

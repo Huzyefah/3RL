@@ -316,6 +316,15 @@ async def run_incident(
         },
         {"type": "post_chat", "params": {}, "rationale": "Notify on-call"},
     ]
+    # Re-read the segment: segment candidates may have joined the group while the agents were investigating.
+    seg = inc.segment_key
+    worst = (seg_ev or {}).get("worst") or {}
+    if (
+        not seg.startswith("bank=")
+        and code_guess == "RC-BANK"
+        and str(worst.get("segment", "")).startswith("bank=")
+    ):
+        seg = worst["segment"]
     if seg.startswith("bank="):
         actions.append(
             {

@@ -34,12 +34,13 @@ def decide(
         return "AUTO", "low-risk, reversible"
     if action_type in p["hitl"]:
         rule = p["hitl"][action_type]
-        if rule.get("require_healthy_target"):
-            if target_health_u is None or target_health_u >= rule["healthy_u_max"]:
-                return (
-                    "DENY",
-                    f"target unhealthy (u={target_health_u}); failover to an unhealthy target is forbidden",
-                )
+        if rule.get("require_healthy_target") and (
+            target_health_u is None or target_health_u >= rule["healthy_u_max"]
+        ):
+            return (
+                "DENY",
+                f"target unhealthy (u={target_health_u}); failover to an unhealthy target is forbidden",
+            )
         return (
             "HITL",
             f"needs approval; healthy target (u={target_health_u}); expires in {rule['approval_ttl_min']} min",
