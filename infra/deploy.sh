@@ -2,6 +2,8 @@
 # Build (Cloud Build, repo-root context) and deploy ONE Sentinel service: api | sim | web.
 # Never touches any other Cloud Run service in the project.
 set -euo pipefail
+# gcloud storage commands crash under Python 3.14; pin a supported interpreter when available.
+command -v python3.12 >/dev/null && export CLOUDSDK_PYTHON="${CLOUDSDK_PYTHON:-$(command -v python3.12)}"
 SVC="${1:?usage: deploy.sh api|sim|web}"
 PROJECT="${GCP_PROJECT:-mda-atomcamp}"
 REGION="${GCP_REGION:-us-central1}"
@@ -9,17 +11,35 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PNUM="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 url() { echo "https://$1-$PNUM.$REGION.run.app"; }
 envval() { grep -E "^$1=" "$ROOT/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d "'\"" || true; }
-TAG="$(git -C "$ROOT" rev-parse --short HEAD)$(git -C "$ROOT" diff --quiet || echo -dirty)"
-IMAGE="$REGION-docker.pkg.dev/$PROJECT/sentinel/$SVC:$TAG"
 g() { gcloud --project "$PROJECT" --quiet "$@"; }
 
 case "$SVC" in
-  api) NAME=sentinel-api ;; sim) NAME=finpay-sim ;; web) NAME=sentinel-web ;;
+  api) NAME=sentinel-api; SRC=backend ;; sim) NAME=finpay-sim; SRC=sim ;; web) NAME=sentinel-web; SRC=frontend ;;
   *) echo "unknown service $SVC"; exit 2 ;;
 esac
 
-echo "== build $NAME → $IMAGE"
-(cd "$ROOT" && g builds submit --config "infra/cloudbuild/$SVC.yaml" --substitutions "_IMAGE=$IMAGE" .)
+# Tag = git tree hash of the service's source dir, so unrelated commits reuse the image. Refuse dirty sources.
+if ! git -C "$ROOT" diff --quiet HEAD -- "$SRC" || [ -n "$(git -C "$ROOT" ls-files --others --exclude-standard -- "$SRC")" ]; then
+  echo "uncommitted changes in $SRC/ — commit before deploying"; exit 3
+fi
+TAG="$(git -C "$ROOT" rev-parse --short=12 "HEAD:$SRC")"
+IMAGE="$REGION-docker.pkg.dev/$PROJECT/sentinel/$SVC:$TAG"
+
+if g artifacts docker images describe "$IMAGE" >/dev/null 2>&1; then
+  echo "== image exists, skipping build: $IMAGE"
+else
+  echo "== build $NAME → $IMAGE"
+  # --async + slow polling: synchronous submit polls every 1 s and trips the 60 GET/min Cloud Build quota.
+  BUILD_ID="$(cd "$ROOT" && g builds submit --async --format='value(id)' --config "infra/cloudbuild/$SVC.yaml" --substitutions "_IMAGE=$IMAGE" .)"
+  while :; do
+    st="$(g builds describe "$BUILD_ID" --format='value(status)')"
+    case "$st" in
+      SUCCESS) echo "   build $BUILD_ID SUCCESS"; break ;;
+      FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED) echo "   build $BUILD_ID $st"; exit 1 ;;
+      *) sleep 10 ;;
+    esac
+  done
+fi
 
 echo "== deploy $NAME"
 case "$SVC" in

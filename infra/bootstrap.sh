@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Idempotent GCP bootstrap for Sentinel. Touches ONLY Sentinel resources (never other Cloud Run services).
 set -euo pipefail
+# gcloud storage commands crash under Python 3.14; pin a supported interpreter when available.
+command -v python3.12 >/dev/null && export CLOUDSDK_PYTHON="${CLOUDSDK_PYTHON:-$(command -v python3.12)}"
 PROJECT="${GCP_PROJECT:-mda-atomcamp}"
 REGION="${GCP_REGION:-us-central1}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -36,8 +38,15 @@ say "BigQuery dataset + tables"
 bq --project_id "$PROJECT" show --dataset "$PROJECT:sentinel" >/dev/null 2>&1 \
   || bq --project_id "$PROJECT" mk --dataset --location US "$PROJECT:sentinel"
 bq --project_id "$PROJECT" query --nouse_legacy_sql --quiet < "$ROOT/infra/bq_schema.sql" >/dev/null
-bq --project_id "$PROJECT" add-iam-policy-binding --member "serviceAccount:$PUBSUB_AGENT" \
-  --role roles/bigquery.dataEditor "$PROJECT:sentinel" >/dev/null 2>&1 || echo "  (dataset IAM binding: verify manually)"
+# Pub/Sub service agent needs WRITER on the dataset for the BigQuery subscription (dataset ACL, least privilege).
+DS_JSON="$(mktemp)"
+bq --project_id "$PROJECT" show --format=prettyjson "$PROJECT:sentinel" > "$DS_JSON"
+if ! jq -e --arg a "$PUBSUB_AGENT" '.access[] | select(.userByEmail == $a and .role == "WRITER")' "$DS_JSON" >/dev/null; then
+  jq --arg a "$PUBSUB_AGENT" '.access += [{"role":"WRITER","userByEmail":$a}]' "$DS_JSON" > "$DS_JSON.new"
+  bq --project_id "$PROJECT" update --source "$DS_JSON.new" "$PROJECT:sentinel" >/dev/null
+  echo "  granted WRITER on sentinel to $PUBSUB_AGENT"
+fi
+rm -f "$DS_JSON" "$DS_JSON.new"
 
 say "Pub/Sub topics + BigQuery subscription"
 for t in telemetry telemetry-dlq; do
