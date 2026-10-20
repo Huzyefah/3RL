@@ -38,3 +38,4 @@ tmp/
 .env
 .env.*
 !.env.example
+.superpowers/
