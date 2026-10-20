@@ -1,0 +1,21 @@
+Sentinel preflight — project=mda-atomcamp region=us-central1 — 2026-10-20T08:07:27Z
+1. Toolchain
+  [ OK ] gcloud: /opt/homebrew/bin/gcloud
+  [ OK ] uv: /opt/homebrew/bin/uv
+  [ OK ] node: /opt/homebrew/bin/node
+  [ OK ] npm: /opt/homebrew/bin/npm
+  [ OK ] python3.12: /Users/huzyefah/.local/bin/python3.12
+2. gcloud identity and project
+  [ OK ] account: huzyefahsaqib13@gmail.com
+  [ OK ] active project: mda-atomcamp
+  [ OK ] huzyefahsaqib13@gmail.com has roles/owner
+3. Billing
+  [ OK ] billing enabled: True	billingAccounts/01A094-D71AD3-175CE4
+4. Data
+  [ OK ] PS-02 CSV rows: 500
+5. OpenAI key
+  [FAIL] OPENAI_API_KEY not set (env or .env)
+6. Google Chat webhook (optional)
+  [WARN] CHAT_WEBHOOK_URL absent → UI 'Chat card' panel fallback
+
+PREFLIGHT: FAIL
