@@ -6,6 +6,33 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
+.pyright/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+backend/.cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Test output (PNGs, GIFs, REPORT.md and small JSON/XML reports stay committed)
+test-results/
+playwright-report/
+coverage/
+*.trace.zip
+test-evidence/**/*.webm
+test-evidence/**/*.html
+test-evidence/**/trace*
+
+# Temp
+tmp/
+.tmp/
+*.log
 
 # Local environment files
 .env

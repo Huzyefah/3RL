@@ -1,0 +1,51 @@
+[project]
+name = "sentinel-workspace"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = ["sentinel", "finpay_sim"]
+
+[tool.uv.workspace]
+members = ["backend", "sim"]
+
+[tool.uv.sources]
+sentinel = { workspace = true }
+finpay_sim = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+  "pytest-html",
+  "pytest-cov",
+  "pytest-socket",
+  "hypothesis",
+  "ruff",
+  "pyright",
+  "httpx",
+  "pandas",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "sim/tests", "analysis/tests"]
+addopts = "-m 'not live and not gcp' --import-mode=importlib"
+asyncio_mode = "auto"
+markers = [
+  "unit: fast, hermetic unit tests",
+  "integration: multi-component tests without external services",
+  "e2e_http: end-to-end tests over HTTP against running services",
+  "live: tests that call live external APIs (deselected by default)",
+  "gcp: tests that need GCP resources (deselected by default)",
+]
+# pytest-socket: `--disable-socket` is passed for `-m unit` runs by scripts/gate.sh and CI.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["frontend", "e2e", "scripts", "infra"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+include = ["backend", "sim", "analysis"]

@@ -1,0 +1,49 @@
+# Local stack. Reads variables from .env (copy .env.example). Build context = repo root (D1).
+x-hardening: &hardening
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  stop_grace_period: 15s
+
+services:
+  sentinel-api:
+    <<: *hardening
+    build: { context: ., dockerfile: backend/Dockerfile }
+    ports: ["127.0.0.1:8080:8080"]
+    env_file: [{ path: .env, required: false }]
+    environment:
+      PORT: "8080"
+      SIM_BASE_URL: http://finpay-sim:8081
+    depends_on: [finpay-sim]
+    healthcheck:   # placeholder /healthz now; Phase 6 replaces the app
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8080/healthz', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  finpay-sim:
+    <<: *hardening
+    build: { context: ., dockerfile: sim/Dockerfile }
+    ports: ["127.0.0.1:8081:8081"]
+    environment:
+      PORT: "8081"
+      EMIT_MODE: http
+      SIM_ADMIN_TOKEN: ${SIM_ADMIN_TOKEN:-dev-sim-token}
+      SENTINEL_INGEST_URL: http://sentinel-api:8080/ingest
+    # Phase 5 replaces the placeholder app.
+
+  sentinel-web:
+    <<: *hardening
+    build: { context: ., dockerfile: frontend/Dockerfile }
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      PORT: "3000"
+      API_INTERNAL_URL: http://sentinel-api:8080
+    tmpfs: [/tmp, /app/.next/cache]
+    depends_on: [sentinel-api]
+
+  # TODO(Phase 8): profile "emulators": Pub/Sub emulator, BigQuery emulator (goccy/bigquery-emulator),
+  # and a dev-only pull-to-push forwarder if the emulator lacks push support.
+  # pubsub-emulator: { profiles: [emulators], ... }
+  # bigquery-emulator: { profiles: [emulators], ... }
