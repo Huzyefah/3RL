@@ -1,0 +1,5 @@
+config,tp,fp,fn,precision,recall
+B0,0,0,28,0.0,0.0
+B0_test_split,0,0,12,0.0,0.0
+B1,28,22,0,0.56,1.0
+B1_test_split,12,9,0,0.57,1.0
