@@ -326,5 +326,804 @@
       },
       "pages_avoided_vs_B1": 2
     }
+  },
+  "agents": {
+    "S3_deterministic": {
+      "mode": "off",
+      "model": "deterministic fallback agents",
+      "tau": 0.45,
+      "groups": 19,
+      "outcomes": {
+        "page": 15,
+        "p3_watch": 4,
+        "suppressed": 0
+      },
+      "false_alarms_suppressed": 0,
+      "skeptic_induced_misses": [],
+      "rca_top1_code_accuracy": 1.0,
+      "root_service_accuracy": 1.0,
+      "rca_generated_by": {
+        "llm": 0,
+        "statistical-fallback": 19,
+        "null": 0
+      },
+      "tokens_total": 0,
+      "S2": {
+        "recall": 1.0,
+        "precision": 0.631578947368421,
+        "false_positives": 7,
+        "alerts": 19,
+        "lead_median": 7.0
+      },
+      "S3_pages": {
+        "recall": 1.0,
+        "precision": 0.8,
+        "fp_per_service_day": 0.0375,
+        "lead_median": 7.0,
+        "incidents": 12,
+        "detected": 12,
+        "false_positives": 3,
+        "duplicates": 0,
+        "alerts": 15,
+        "alerts_per_day": 1.5,
+        "lead_p25": 0.75,
+        "lead_p75": 13.25,
+        "lead_median_non_abrupt": 13.0,
+        "pct_lead_gt0_non_abrupt": 1.0,
+        "abrupt_detected": 3,
+        "leads": {
+          "INC-PS02-0017": 4.0,
+          "INC-PS02-0018": 14.0,
+          "INC-PS02-0019": 6.0,
+          "INC-PS02-0020": 19.0,
+          "INC-PS02-0021": 0.0,
+          "INC-PS02-0022": 0.0,
+          "INC-PS02-0023": 13.0,
+          "INC-PS02-0024": 1.0,
+          "INC-PS02-0025": 0.0,
+          "INC-PS02-0026": 8.0,
+          "INC-PS02-0027": 14.0,
+          "INC-PS02-0028": 13.0
+        },
+        "pkr_protected_est": 92465088,
+        "ci95": {
+          "recall": [
+            1.0,
+            1.0
+          ],
+          "precision": [
+            0.7272727272727273,
+            1.0
+          ],
+          "fp_per_service_day": [
+            0.0,
+            0.0375
+          ],
+          "lead_median": [
+            0.5,
+            13.0
+          ]
+        }
+      },
+      "S3_all_escalations": {
+        "recall": 1.0,
+        "precision": 0.631578947368421,
+        "false_positives": 7,
+        "alerts": 19,
+        "lead_median": 7.0
+      },
+      "per_group": [
+        {
+          "ts": "2026-08-21 02:11:00",
+          "service": "NotificationHub",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-OTP-PROVIDER",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-21 05:12:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-21 15:45:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-22 14:05:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-22 19:36:00",
+          "service": "PaymentGateway",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-BANK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-23 10:55:00",
+          "service": "ReportGenerator",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-23 12:46:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-25 04:42:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 08:57:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 13:46:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 16:54:00",
+          "service": "AuthService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 19:39:00",
+          "service": "PaymentGateway",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-BANK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 22:08:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-26 04:05:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-28 20:20:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-29 04:34:00",
+          "service": "ReportGenerator",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-29 16:58:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-29 23:36:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-30 19:16:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        }
+      ]
+    },
+    "S3": {
+      "mode": "live",
+      "model": "gpt-6-luna",
+      "tau": 0.45,
+      "groups": 19,
+      "outcomes": {
+        "page": 12,
+        "p3_watch": 7,
+        "suppressed": 0
+      },
+      "false_alarms_suppressed": 0,
+      "skeptic_induced_misses": [],
+      "rca_top1_code_accuracy": 1.0,
+      "root_service_accuracy": 1.0,
+      "rca_generated_by": {
+        "llm": 18,
+        "statistical-fallback": 1,
+        "null": 0
+      },
+      "tokens_total": 66700,
+      "S2": {
+        "recall": 1.0,
+        "precision": 0.631578947368421,
+        "false_positives": 7,
+        "alerts": 19,
+        "lead_median": 7.0
+      },
+      "S3_pages": {
+        "recall": 1.0,
+        "precision": 1.0,
+        "fp_per_service_day": 0.0,
+        "lead_median": 7.0,
+        "incidents": 12,
+        "detected": 12,
+        "false_positives": 0,
+        "duplicates": 0,
+        "alerts": 12,
+        "alerts_per_day": 1.2,
+        "lead_p25": 0.75,
+        "lead_p75": 13.25,
+        "lead_median_non_abrupt": 13.0,
+        "pct_lead_gt0_non_abrupt": 1.0,
+        "abrupt_detected": 3,
+        "leads": {
+          "INC-PS02-0017": 4.0,
+          "INC-PS02-0018": 14.0,
+          "INC-PS02-0019": 6.0,
+          "INC-PS02-0020": 19.0,
+          "INC-PS02-0021": 0.0,
+          "INC-PS02-0022": 0.0,
+          "INC-PS02-0023": 13.0,
+          "INC-PS02-0024": 1.0,
+          "INC-PS02-0025": 0.0,
+          "INC-PS02-0026": 8.0,
+          "INC-PS02-0027": 14.0,
+          "INC-PS02-0028": 13.0
+        },
+        "pkr_protected_est": 92465088,
+        "ci95": {
+          "recall": [
+            1.0,
+            1.0
+          ],
+          "precision": [
+            1.0,
+            1.0
+          ],
+          "fp_per_service_day": [
+            0.0,
+            0.0
+          ],
+          "lead_median": [
+            0.5,
+            13.0
+          ]
+        }
+      },
+      "S3_all_escalations": {
+        "recall": 1.0,
+        "precision": 0.631578947368421,
+        "false_positives": 7,
+        "alerts": 19,
+        "lead_median": 7.0
+      },
+      "per_group": [
+        {
+          "ts": "2026-08-21 02:11:00",
+          "service": "NotificationHub",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-OTP-PROVIDER",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-21 05:12:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-21 15:45:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-22 14:05:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-22 19:36:00",
+          "service": "PaymentGateway",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-BANK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-23 10:55:00",
+          "service": "ReportGenerator",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-23 12:46:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-25 04:42:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 08:57:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 13:46:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-25 16:54:00",
+          "service": "AuthService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 19:39:00",
+          "service": "PaymentGateway",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-BANK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-25 22:08:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-26 04:05:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-28 20:20:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-ABRUPT",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-29 04:34:00",
+          "service": "ReportGenerator",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-29 16:58:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-29 23:36:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-30 19:16:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        }
+      ]
+    },
+    "S3_train": {
+      "mode": "live",
+      "model": "gpt-6-luna",
+      "tau": 0.45,
+      "groups": 21,
+      "outcomes": {
+        "page": 15,
+        "p3_watch": 6,
+        "suppressed": 0
+      },
+      "false_alarms_suppressed": 0,
+      "skeptic_induced_misses": [],
+      "rca_top1_code_accuracy": 1.0,
+      "root_service_accuracy": 1.0,
+      "rca_generated_by": {
+        "llm": 21,
+        "statistical-fallback": 0,
+        "null": 0
+      },
+      "tokens_total": 75143,
+      "S2": {
+        "recall": 1.0,
+        "precision": 0.6956521739130435,
+        "false_positives": 7,
+        "alerts": 21,
+        "lead_median": 10.5
+      },
+      "S3_pages": {
+        "recall": 1.0,
+        "precision": 0.9411764705882353,
+        "fp_per_service_day": 0.00625,
+        "lead_median": 10.5,
+        "incidents": 16,
+        "detected": 16,
+        "false_positives": 1,
+        "duplicates": 0,
+        "alerts": 15,
+        "alerts_per_day": 0.75,
+        "lead_p25": 2.75,
+        "lead_p75": 14.5,
+        "lead_median_non_abrupt": 13.0,
+        "pct_lead_gt0_non_abrupt": 1.0,
+        "abrupt_detected": 3,
+        "leads": {
+          "INC-PS02-0001": 10.0,
+          "INC-PS02-0002": 31.0,
+          "INC-PS02-0003": 13.0,
+          "INC-PS02-0004": 3.0,
+          "INC-PS02-0005": 0.0,
+          "INC-PS02-0006": 0.0,
+          "INC-PS02-0007": 11.0,
+          "INC-PS02-0008": 13.0,
+          "INC-PS02-0009": 2.0,
+          "INC-PS02-0010": 4.0,
+          "INC-PS02-0011": 16.0,
+          "INC-PS02-0012": 28.0,
+          "INC-PS02-0013": 0.0,
+          "INC-PS02-0014": 6.0,
+          "INC-PS02-0015": 17.0,
+          "INC-PS02-0016": 14.0
+        },
+        "pkr_protected_est": 142796160,
+        "ci95": {
+          "recall": [
+            1.0,
+            1.0
+          ],
+          "precision": [
+            0.8888888888888888,
+            1.0
+          ],
+          "fp_per_service_day": [
+            0.0,
+            0.00625
+          ],
+          "lead_median": [
+            1.5,
+            14.0
+          ]
+        }
+      },
+      "S3_all_escalations": {
+        "recall": 1.0,
+        "precision": 0.6956521739130435,
+        "false_positives": 7,
+        "alerts": 21,
+        "lead_median": 10.5
+      },
+      "per_group": [
+        {
+          "ts": "2026-08-01 10:28:00",
+          "service": "AuthService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-01 19:09:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-02 02:40:00",
+          "service": "NotificationHub",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-OTP-PROVIDER",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-04 08:41:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-04 13:28:00",
+          "service": "DataPipeline",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-05 01:41:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-05 08:01:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-08 18:08:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-09 10:31:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-09 19:36:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-11 09:15:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-13 05:23:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-DBPOOL",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-14 03:13:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-ABRUPT",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-15 09:56:00",
+          "service": "AuthService",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-ABRUPT",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-16 06:04:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-16 15:13:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "p3_watch",
+          "verdict": "DISPUTED",
+          "top1": "RC-QUEUE",
+          "rechecks": 2
+        },
+        {
+          "ts": "2026-08-17 07:08:00",
+          "service": "SearchAPI",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-18 06:24:00",
+          "service": "PaymentGateway",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-BANK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-19 03:15:00",
+          "service": "UserProfileService",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-MEMLEAK",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-19 07:46:00",
+          "service": "AnalyticsDashboard",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-QUEUE",
+          "rechecks": 0
+        },
+        {
+          "ts": "2026-08-20 16:20:00",
+          "service": "NotificationHub",
+          "segment": "*",
+          "outcome": "page",
+          "verdict": "CONFIRMED",
+          "top1": "RC-OTP-PROVIDER",
+          "rechecks": 2
+        }
+      ],
+      "split": "train"
+    }
   }
 }

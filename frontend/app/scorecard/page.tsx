@@ -29,6 +29,7 @@ type Scorecard = {
   generated_at?: string;
   csv_bench: { rows: number; incidents: number; B0: Bench; B1: Bench };
   configs: Record<string, Config>;
+  agents?: Record<string, { S2: { false_positives: number }; S3_pages: Config; outcomes: Record<string, number>; rca_top1_code_accuracy: number | null; skeptic_induced_misses: string[]; tokens_total: number }>;
 };
 
 async function loadScorecard(): Promise<{ data: Scorecard; live: boolean }> {
@@ -46,6 +47,8 @@ const ROWS: { key: string; label: string }[] = [
   { key: "B1", label: "B1 · 95% rule (today's monitor)" },
   { key: "S1", label: "S1 · Holt forecast" },
   { key: "S2", label: "S2 · Sentinel detector + grouping" },
+  { key: "S3d", label: "S3 · S2 + agents (deterministic fallback)" },
+  { key: "S3", label: "S3 · S2 + agents (gpt-6-luna Skeptic) — pages" },
 ];
 
 const f2 = (x: number | null | undefined) => (x == null ? "—" : x.toFixed(2));
@@ -62,8 +65,14 @@ export default function ScorecardPage() {
 }
 
 async function ScorecardBody() {
-  const { data, live } = await loadScorecard();
-  const { csv_bench: csv, configs } = data;
+  const { data, live: fromApi } = await loadScorecard();
+  const { csv_bench: csv } = data;
+  const agents = data.agents ?? {};
+  const configs: Record<string, Config> = { ...data.configs };
+  if (agents.S3_deterministic) configs.S3d = agents.S3_deterministic.S3_pages;
+  if (agents.S3) configs.S3 = agents.S3.S3_pages;
+  const live = agents.S3;
+  const train = agents.S3_train;
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
@@ -71,7 +80,7 @@ async function ScorecardBody() {
         <p className="text-xs text-muted">{data.splits}</p>
         <p className="text-xs text-muted">
           <span className="tabular font-semibold text-foreground">τ = {data.tau}</span> (tuned on train only) · {data.test_incidents} test incidents ·{" "}
-          {data.test_hard_negatives} hard negatives · source: {live ? "sentinel-api /scorecard" : "bundled scorecard.json"}
+          {data.test_hard_negatives} hard negatives · source: {fromApi ? "sentinel-api /scorecard" : "bundled scorecard.json"}
         </p>
         <p className="flex items-center gap-1.5 text-xs text-faint">
           {Icon.info()} Every number on this page is computed by the scorer; nothing is typed by hand.
@@ -112,7 +121,7 @@ async function ScorecardBody() {
               {ROWS.map(({ key, label }) => {
                 const c = configs[key];
                 if (!c) return null;
-                const hero = key === "S2";
+                const hero = key === (configs.S3 ? "S3" : "S2");
                 return (
                   <tr key={key} data-testid={`scorecard-row-${key}`} className={hero ? "bg-accent-soft/60 font-semibold" : ""}>
                     <td className="px-3.5 py-2 whitespace-nowrap">{label}</td>
@@ -138,18 +147,27 @@ async function ScorecardBody() {
                   </tr>
                 );
               })}
-              <tr data-testid="scorecard-row-S3" className="text-faint">
-                <td className="px-3.5 py-2 whitespace-nowrap">S3 · S2 + agents/Skeptic — computed live by agents</td>
-                {Array.from({ length: 7 }, (_, i) => (
-                  <td key={i} className="px-3.5 py-2">
-                    —
-                  </td>
-                ))}
-              </tr>
             </tbody>
           </table>
         </div>
       </Panel>
+
+      {live && (
+        <Panel title="Agents (S3) — what the Skeptic changed" icon={Icon.scale()} testid="s3-panel">
+          <div className="grid gap-3 p-3.5 text-xs sm:grid-cols-4">
+            <div><div className="text-muted">Pages vs S2 alerts</div><div className="tabular text-lg font-semibold">{live.outcomes.page} / {configs.S2?.alerts}</div></div>
+            <div><div className="text-muted">False pages → P3 watch tickets</div><div className="tabular text-lg font-semibold">{configs.S2?.false_positives} → {configs.S3?.false_positives}</div></div>
+            <div><div className="text-muted">Skeptic-induced misses</div><div className="tabular text-lg font-semibold">{live.skeptic_induced_misses.length}</div></div>
+            <div><div className="text-muted">RCA top-1 root-cause accuracy</div><div className="tabular text-lg font-semibold">{live.rca_top1_code_accuracy == null ? "—" : `${(live.rca_top1_code_accuracy * 100).toFixed(0)}%`}</div></div>
+          </div>
+          {train && (
+            <p className="px-3.5 pb-3 text-xs text-muted">
+              Independent check on the train split (Aug 1–20, never used to edit the Skeptic): false pages {train.S2.false_positives} → {train.S3_pages.false_positives},
+              recall {f2(train.S3_pages.recall)}, {train.skeptic_induced_misses.length} Skeptic-induced misses. Disputed alerts become P3 watch tickets, not pages.
+            </p>
+          )}
+        </Panel>
+      )}
 
       <LeadChart s2={configs.S2?.leads ?? {}} b1={configs.B1?.leads ?? {}} />
     </div>

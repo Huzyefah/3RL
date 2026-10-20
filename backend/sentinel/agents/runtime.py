@@ -23,11 +23,15 @@ from sentinel.schemas import IncidentCandidate
 Emit = Callable[[dict], Awaitable[None]]
 
 SKEPTIC_SYS = (
-    "You are the Skeptic in a payments AIOps team. Try to PROVE the alert is NOT a real incident: look for a "
-    "scheduled batch, a marketing/salary surge, a deploy blip, or a transient spike already recovering. Answer "
-    'JSON {"verdict":"CONFIRMED|DISPUTED|BENIGN","confidence":0-1,"counter_evidence":[str],"cited_evidence_ids":[str],'
-    '"what_would_convince_me":str}. BENIGN only if you cite a benign evidence_id AND the trend is recovering. '
-    "A deploy or salary day is never a free pass on its own."
+    "You are the Skeptic in a payments AIOps team. Try to PROVE the alert is NOT a real incident: a scheduled "
+    "batch job, a marketing or salary-day surge, a deploy blip, or a transient spike already recovering. "
+    "Decision rule: CONFIRMED only if there is failure-specific evidence (error log templates such as ISO8583 RC=91, "
+    "HikariPool timeouts, consumer lag, GC overhead, SMS DLR timeouts, or one segment failing far above its peers). "
+    "If a benign scheduled event explains the load and there is no failure-specific evidence, answer DISPUTED (watch, "
+    "do not page). BENIGN only if you cite a benign evidence_id AND the trend is recovering. A deploy or a salary day "
+    "is never a free pass when failure-specific evidence exists. Use the provided summary. Answer JSON "
+    '{"verdict":"CONFIRMED|DISPUTED|BENIGN","confidence":0-1,"counter_evidence":[str],"cited_evidence_ids":[str],'
+    '"what_would_convince_me":str}.'
 )
 COMMANDER_SYS = (
     "You are the Incident Commander for NovaPay (a Pakistani digital wallet; partner banks BANK_A..E; Raast rail). "
@@ -209,8 +213,15 @@ async def run_incident(
     corroborated = bool(logs["novel_templates"]) and any(
         k in t["template"] for t in logs["novel_templates"] for k in ("ISO8583", "Hikari", "lag", "GC", "SMS")
     )
+    failure_specific = [
+        f"log template '{t['template'][:60]}' ×{t['count']}"
+        for t in logs["novel_templates"]
+        if any(k in t["template"] for k in ("ISO8583", "Hikari", "lag", "GC", "SMS"))
+    ]
+    if seg_ev and (seg_ev.get("x_vs_peers") or 0) >= 3:
+        failure_specific.append(f"{seg_ev['worst']['segment']} failing at {seg_ev['x_vs_peers']}× peers")
     verdict, conf, counter = await _skeptic(
-        r, inc, [win, seg_ev, logs, fc, cal, chg], benign_events, recovering, corroborated
+        r, inc, [win, seg_ev, logs, fc, cal, chg], benign_events, recovering, corroborated, failure_specific
     )
     plan_versions = 1
     if verdict == "DISPUTED" or len(inc.symptom_services) > 0:
@@ -388,7 +399,7 @@ async def run_incident(
 
 
 async def _skeptic(
-    r: Run, inc, evidence, benign_events, recovering, corroborated
+    r: Run, inc, evidence, benign_events, recovering, corroborated, failure_specific=()
 ) -> tuple[str, float, list[str]]:
     ev = [e for e in evidence if e]
     if r.mode == "live":
@@ -402,6 +413,11 @@ async def _skeptic(
                             "segment": inc.segment_key,
                             "symptoms": inc.symptom_services,
                             "risk": inc.risk,
+                        },
+                        "summary": {
+                            "benign_scheduled_events": [e["name"] for e in benign_events],
+                            "failure_specific_evidence": list(failure_specific),
+                            "trend": "recovering" if recovering else "rising",
                         },
                         "evidence": ev,
                     },
@@ -419,6 +435,12 @@ async def _skeptic(
                 verdict = "DISPUTED"  # I2: BENIGN without a cited benign event becomes a dispute
             conf = float(data.get("confidence", 0.5))
             counter = [str(x) for x in data.get("counter_evidence", [])][:4]
+            if verdict == "CONFIRMED" and benign_events and not failure_specific:
+                # I2b (mirror of I2): a page needs failure-specific evidence when a scheduled event explains the load.
+                verdict = "DISPUTED"
+                counter = [
+                    f"I2b: {benign_events[0]['name']} explains the load and no failure-specific evidence exists"
+                ] + counter[:3]
             await r.trace_step(
                 "skeptic",
                 "challenge",

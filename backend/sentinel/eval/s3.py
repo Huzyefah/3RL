@@ -73,9 +73,9 @@ async def _judge(ds, sig, inc, ts, mem, topo, mode) -> dict:
     return await run_incident(inc, ctx, mem, _noop, mode)
 
 
-async def evaluate(mode: str, tau: float, concurrency: int = 6) -> dict:
+async def evaluate(mode: str, tau: float, concurrency: int = 6, split: str = "test") -> dict:
     ds = build("ps02")
-    lo, hi = splits.PS02_TEST
+    lo, hi = splits.PS02_TEST if split == "test" else splits.PS02_TRAIN
     sig = compute_signals(ds, lo, hi)
     topo = Topology.load()
     mem = T.Memory()  # train-split corpus only: test incidents are never recalled
@@ -187,12 +187,14 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", choices=["off", "live"], default="off")
     ap.add_argument("--tau", type=float, default=None)
+    ap.add_argument("--split", choices=["test", "train"], default="test")
     args = ap.parse_args()
     sc_path = settings.config_dir / "scorecard.json"
     sc = json.loads(sc_path.read_text())
     tau = args.tau if args.tau is not None else sc["tau"]
-    res = asyncio.run(evaluate(args.mode, tau))
-    key = "S3" if args.mode == "live" else "S3_deterministic"
+    res = asyncio.run(evaluate(args.mode, tau, split=args.split))
+    res["split"] = args.split
+    key = ("S3" if args.mode == "live" else "S3_deterministic") + ("" if args.split == "test" else "_train")
     sc.setdefault("agents", {})[key] = res
     sc_path.write_text(json.dumps(sc, indent=2, default=str))
     p = res["S3_pages"]
