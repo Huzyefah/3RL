@@ -1,0 +1,133 @@
+# NovaPay service topology (FP 3.1). Keys are the PS-02 CSV service names (canonical ids);
+# novapay_name is the display name. LedgerSync == DataPipeline. Partner banks and SMS
+# providers are fictional. Deliberately NO SearchAPI -> UserProfileService edge (D6).
+# Per-metric thresholds are the per-service medians of the CSV `threshold` column.
+banks: [BANK_A, BANK_B, BANK_C, BANK_D, BANK_E]
+otp_providers: [P1, P2]
+services:
+  PaymentGateway:
+    novapay_name: PaymentGateway
+    owner: Payments
+    tier: 0
+    depends_on: [AuthService, DataPipeline, NotificationHub]
+    segments:
+      bank: [BANK_A, BANK_B, BANK_C, BANK_D, BANK_E]
+    metrics:
+      connection_pool: {threshold: 53.6, direction: higher_bad}
+      cpu_usage: {threshold: 63.1, direction: higher_bad}
+      disk_io: {threshold: 69.4, direction: higher_bad}
+      error_rate: {threshold: 93.2, direction: higher_bad}
+      latency_p99: {threshold: 92.8, direction: higher_bad}
+      memory_usage: {threshold: 95.2, direction: higher_bad}
+      queue_depth: {threshold: 48.1, direction: higher_bad}
+    segment_metrics:
+      payment_success_rate: {threshold: 0.97, direction: lower_bad}
+      issuer_timeout_rate: {threshold: 0.02, direction: higher_bad}
+  AuthService:
+    novapay_name: AuthService
+    owner: Identity & Security
+    tier: 0
+    depends_on: [UserProfileService]
+    segments: {}
+    metrics:
+      connection_pool: {threshold: 73.4, direction: higher_bad}
+      cpu_usage: {threshold: 68.7, direction: higher_bad}
+      disk_io: {threshold: 76.3, direction: higher_bad}
+      error_rate: {threshold: 71.1, direction: higher_bad}
+      latency_p99: {threshold: 85.6, direction: higher_bad}
+      memory_usage: {threshold: 60.9, direction: higher_bad}
+      queue_depth: {threshold: 54.8, direction: higher_bad}
+    segment_metrics:
+      login_failure_rate: {threshold: 0.08, direction: higher_bad}
+  NotificationHub:
+    novapay_name: OTP & NotificationHub
+    owner: Digital Channels
+    tier: 0
+    depends_on: []
+    segments:
+      provider: [P1, P2]
+    metrics:
+      connection_pool: {threshold: 53.5, direction: higher_bad}
+      cpu_usage: {threshold: 61.4, direction: higher_bad}
+      disk_io: {threshold: 69.6, direction: higher_bad}
+      error_rate: {threshold: 76.6, direction: higher_bad}
+      latency_p99: {threshold: 60.0, direction: higher_bad}
+      memory_usage: {threshold: 48.3, direction: higher_bad}
+      queue_depth: {threshold: 73.4, direction: higher_bad}
+    segment_metrics:
+      otp_delivery_rate: {threshold: 0.95, direction: lower_bad}
+  DataPipeline:
+    novapay_name: LedgerSync
+    owner: Core Banking Ops
+    tier: 0
+    depends_on: []
+    segments: {}
+    metrics:
+      connection_pool: {threshold: 78.0, direction: higher_bad}
+      cpu_usage: {threshold: 84.9, direction: higher_bad}
+      disk_io: {threshold: 95.0, direction: higher_bad}
+      error_rate: {threshold: 64.6, direction: higher_bad}
+      latency_p99: {threshold: 69.9, direction: higher_bad}
+      memory_usage: {threshold: 42.5, direction: higher_bad}
+      queue_depth: {threshold: 74.7, direction: higher_bad}
+    segment_metrics: {}
+  UserProfileService:
+    novapay_name: CustomerProfile
+    owner: Onboarding
+    tier: 1
+    depends_on: []
+    segments: {}
+    metrics:
+      connection_pool: {threshold: 49.0, direction: higher_bad}
+      cpu_usage: {threshold: 61.4, direction: higher_bad}
+      disk_io: {threshold: 73.1, direction: higher_bad}
+      error_rate: {threshold: 89.6, direction: higher_bad}
+      latency_p99: {threshold: 70.6, direction: higher_bad}
+      memory_usage: {threshold: 70.7, direction: higher_bad}
+      queue_depth: {threshold: 96.8, direction: higher_bad}
+    segment_metrics: {}
+  SearchAPI:
+    novapay_name: TransactionSearchAPI
+    owner: Digital Channels
+    tier: 1
+    depends_on: [DataPipeline]
+    segments: {}
+    metrics:
+      connection_pool: {threshold: 76.8, direction: higher_bad}
+      cpu_usage: {threshold: 56.9, direction: higher_bad}
+      disk_io: {threshold: 77.0, direction: higher_bad}
+      error_rate: {threshold: 65.8, direction: higher_bad}
+      latency_p99: {threshold: 96.2, direction: higher_bad}
+      memory_usage: {threshold: 79.7, direction: higher_bad}
+      queue_depth: {threshold: 87.5, direction: higher_bad}
+    segment_metrics: {}
+  AnalyticsDashboard:
+    novapay_name: FraudRiskAnalytics
+    owner: Risk & Compliance
+    tier: 1
+    depends_on: [DataPipeline]
+    segments: {}
+    metrics:
+      connection_pool: {threshold: 70.8, direction: higher_bad}
+      cpu_usage: {threshold: 67.2, direction: higher_bad}
+      disk_io: {threshold: 60.6, direction: higher_bad}
+      error_rate: {threshold: 59.0, direction: higher_bad}
+      latency_p99: {threshold: 73.2, direction: higher_bad}
+      memory_usage: {threshold: 76.2, direction: higher_bad}
+      queue_depth: {threshold: 65.4, direction: higher_bad}
+    segment_metrics: {}
+  ReportGenerator:
+    novapay_name: RegulatoryReporting
+    owner: Risk & Compliance
+    tier: 2
+    depends_on: [DataPipeline]
+    segments: {}
+    metrics:
+      connection_pool: {threshold: 41.8, direction: higher_bad}
+      cpu_usage: {threshold: 63.0, direction: higher_bad}
+      disk_io: {threshold: 55.5, direction: higher_bad}
+      error_rate: {threshold: 80.8, direction: higher_bad}
+      latency_p99: {threshold: 57.9, direction: higher_bad}
+      memory_usage: {threshold: 42.6, direction: higher_bad}
+      queue_depth: {threshold: 87.8, direction: higher_bad}
+    segment_metrics: {}
