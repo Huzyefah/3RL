@@ -1,0 +1,1123 @@
+{
+  "passed": true,
+  "checks_run": 223,
+  "figure_count": 9,
+  "checks": [
+    {
+      "check": "source_hash",
+      "passed": true,
+      "detail": "Raw output copy exactly matches supplied CSV hash."
+    },
+    {
+      "check": "source_inventory",
+      "passed": true,
+      "detail": "500x10, 28 positives."
+    },
+    {
+      "check": "ratio_label_partition",
+      "passed": true,
+      "detail": "Diagnostic exact partition, not predictive validation."
+    },
+    {
+      "check": "confusion_exceed_supplied_threshold",
+      "passed": true,
+      "detail": "Independent stored-count reconciliation."
+    },
+    {
+      "check": "confusion_ratio_ge_0.95",
+      "passed": true,
+      "detail": "Independent stored-count reconciliation."
+    },
+    {
+      "check": "seed_disjoint",
+      "passed": true,
+      "detail": "96 unique seeds across partitions."
+    },
+    {
+      "check": "feature_scope",
+      "passed": true,
+      "detail": "Detector uses only explicit metrics, no run ID, timestamp or fault/target."
+    },
+    {
+      "check": "partition_train",
+      "passed": true,
+      "detail": "Expected full sequences and no missing values."
+    },
+    {
+      "check": "reproduce_train-000",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-000",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-001",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-001",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-002",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-002",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-003",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-003",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-004",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-004",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-005",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-005",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-006",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-006",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-007",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-007",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-008",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-008",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-009",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-009",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-010",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-010",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-011",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-011",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-012",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-012",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-013",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-013",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-014",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-014",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-015",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-015",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-016",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-016",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-017",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-017",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-018",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-018",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-019",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-019",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-020",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-020",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-021",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-021",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-022",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-022",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_train-023",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_train-023",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "partition_validation",
+      "passed": true,
+      "detail": "Expected full sequences and no missing values."
+    },
+    {
+      "check": "reproduce_validation-000",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-000",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-001",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-001",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-002",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-002",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-003",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-003",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-004",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-004",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-005",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-005",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-006",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-006",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-007",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-007",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-008",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-008",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-009",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-009",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-010",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-010",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-011",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-011",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-012",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-012",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-013",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-013",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-014",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-014",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-015",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-015",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-016",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-016",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-017",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-017",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-018",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-018",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-019",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-019",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-020",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-020",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-021",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-021",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-022",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-022",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_validation-023",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_validation-023",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "partition_test",
+      "passed": true,
+      "detail": "Expected full sequences and no missing values."
+    },
+    {
+      "check": "reproduce_test-000",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-000",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-001",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-001",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-002",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-002",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-003",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-003",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-004",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-004",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-005",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-005",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-006",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-006",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-007",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-007",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-008",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-008",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-009",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-009",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-010",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-010",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-011",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-011",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-012",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-012",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-013",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-013",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-014",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-014",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-015",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-015",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-016",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-016",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-017",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-017",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-018",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-018",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-019",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-019",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-020",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-020",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-021",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-021",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-022",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-022",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-023",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-023",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-024",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-024",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-025",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-025",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-026",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-026",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-027",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-027",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-028",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-028",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-029",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-029",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-030",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-030",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-031",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-031",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-032",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-032",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-033",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-033",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-034",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-034",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-035",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-035",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-036",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-036",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-037",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-037",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-038",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-038",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-039",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-039",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-040",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-040",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-041",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-041",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-042",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-042",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-043",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-043",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-044",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-044",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-045",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-045",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-046",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-046",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "reproduce_test-047",
+      "passed": true,
+      "detail": "Saved feature values reproduce fixed seed and rules."
+    },
+    {
+      "check": "onset_test-047",
+      "passed": true,
+      "detail": "Ground truth computed independently from breach rule."
+    },
+    {
+      "check": "total_synthetic_rows",
+      "passed": true,
+      "detail": "96 sequences x 180 windows."
+    },
+    {
+      "check": "no_exact_sequence_overlap",
+      "passed": true,
+      "detail": "No exact cross-partition feature sequence duplicates."
+    },
+    {
+      "check": "paired_pre_action",
+      "passed": true,
+      "detail": "Intervention cannot affect earlier windows."
+    },
+    {
+      "check": "paired_exogenous_noise",
+      "passed": true,
+      "detail": "Demand/provider/capacity identical in both branches."
+    },
+    {
+      "check": "causal_prefix_35",
+      "passed": true,
+      "detail": "Future rows do not alter past detector outputs after warmup."
+    },
+    {
+      "check": "causal_prefix_60",
+      "passed": true,
+      "detail": "Future rows do not alter past detector outputs after warmup."
+    },
+    {
+      "check": "causal_prefix_90",
+      "passed": true,
+      "detail": "Future rows do not alter past detector outputs after warmup."
+    },
+    {
+      "check": "causal_prefix_120",
+      "passed": true,
+      "detail": "Future rows do not alter past detector outputs after warmup."
+    },
+    {
+      "check": "four_event_examples",
+      "passed": true,
+      "detail": "Metric/log/event/span examples validate with timezone-aware timestamps."
+    },
+    {
+      "check": "json_schemas_valid",
+      "passed": true,
+      "detail": "All contracts parse and pass Draft 2020-12 schema validation."
+    },
+    {
+      "check": "all_json_parse",
+      "passed": true,
+      "detail": "No malformed JSON artifact."
+    },
+    {
+      "check": "relative_document_links",
+      "passed": true,
+      "detail": "All local Markdown links resolve: []"
+    },
+    {
+      "check": "image_threshold_label_structure",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_incident_boxplots",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_class_balance_and_timeline",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_numeric_distributions",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_correlations",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_categorical_coverage",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_metric_service_comparisons",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_lead_and_false_alarms",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    },
+    {
+      "check": "image_paired_demo",
+      "passed": true,
+      "detail": "PNG opens with useful resolution."
+    }
+  ],
+  "scope": "Artifact integrity and statistical/simulation invariants only; no deployed application, model quality, agent action, or cloud checks."
+}

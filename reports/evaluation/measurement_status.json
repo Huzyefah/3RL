@@ -1,0 +1,11 @@
+{
+  "organizer_point_baselines": "executed",
+  "synthetic_temporal_detector": "executed",
+  "paired_simulated_retry_cap": "executed",
+  "llm_summary_quality": "not_run_no_model_calls",
+  "historical_retrieval": "not_run_design_only",
+  "agent_workflow": "not_implemented",
+  "real_action_quality": "not_run",
+  "cloud_latency_and_throughput": "not_deployed",
+  "measured_model_tokens_cost": "not_run"
+}

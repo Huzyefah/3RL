@@ -1,0 +1,11 @@
+column,dtype,unique_values,missing
+timestamp,object,500,0
+service_name,object,8,0
+metric_type,object,7,0
+value,float64,486,0
+threshold,float64,489,0
+alert_level,object,3,0
+user_count_active,int64,475,0
+error_count_last_hour,int64,51,0
+response_time_ms,int64,458,0
+is_incident,int64,2,0

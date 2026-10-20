@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://payguard.example/schemas/model-assessment-1.0",
+  "type": "object",
+  "properties": {
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "text",
+          "evidence_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "root_cause_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hypothesis": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "hypothesis",
+              "verified",
+              "rejected"
+            ]
+          },
+          "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contradicting_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "uncertainty": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hypothesis",
+          "status",
+          "supporting_evidence_ids",
+          "contradicting_evidence_ids",
+          "uncertainty"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "historical_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "incident_id": {
+            "type": "string"
+          },
+          "similarity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "cause_verified": {
+            "type": "boolean"
+          },
+          "differences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "incident_id",
+          "similarity",
+          "cause_verified",
+          "differences"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "impact": {
+      "type": "object",
+      "properties": {
+        "measured": {
+          "type": "string"
+        },
+        "projected": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "measured",
+        "projected",
+        "assumptions"
+      ],
+      "additionalProperties": false
+    },
+    "recommended_action": {
+      "type": "object",
+      "properties": {
+        "catalog_action": {
+          "enum": [
+            "observe",
+            "create_internal_ticket",
+            "record_alert",
+            "recommend_runbook",
+            "simulate_retry_cap",
+            "request_human_review"
+          ]
+        },
+        "runbook_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "catalog_action",
+        "runbook_id",
+        "reason",
+        "evidence_ids"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "summary",
+    "facts",
+    "root_cause_hypotheses",
+    "historical_references",
+    "impact",
+    "recommended_action",
+    "uncertainties"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+method,kind,runs,incident_runs,early,late,missed,unmatched_episodes
+hybrid,capacity_loss,8,5,5,0,0,0
+hybrid,healthy,8,0,0,0,0,0
+hybrid,normal_surge,8,0,0,0,0,0
+hybrid,provider_slow,8,5,5,0,0,2
+hybrid,retry_storm,8,8,8,0,0,0
+hybrid,transient_spike,8,0,0,0,0,0
+static,capacity_loss,8,5,0,5,0,0
+static,healthy,8,0,0,0,0,0
+static,normal_surge,8,0,0,0,0,0
+static,provider_slow,8,5,0,5,0,0
+static,retry_storm,8,8,1,7,0,0
+static,transient_spike,8,0,0,0,0,1

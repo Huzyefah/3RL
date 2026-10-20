@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://payguard.example/schemas/telemetry-event-1.0",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "event_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_time_raw": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_mode": {
+      "enum": [
+        "organizer_replay",
+        "synthetic_replay",
+        "live"
+      ]
+    },
+    "service_name": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "metric",
+        "log",
+        "event",
+        "span"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "namespace",
+    "tenant_id",
+    "event_time",
+    "received_at",
+    "source_time_raw",
+    "source_mode",
+    "service_name",
+    "kind",
+    "payload"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {
+          "const": "metric"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            },
+            "unit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "window_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          "required": [
+            "name",
+            "value",
+            "unit",
+            "window_seconds"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "log"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "severity": {
+              "enum": [
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "code",
+            "severity",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "event"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "attributes": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "maxProperties": 16
+            }
+          },
+          "required": [
+            "name",
+            "attributes"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "span"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "trace_id": {
+              "type": "string"
+            },
+            "span_id": {
+              "type": "string"
+            },
+            "parent_span_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "dependency_service": {
+              "type": "string"
+            },
+            "duration_ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "status": {
+              "enum": [
+                "OK",
+                "ERROR",
+                "UNKNOWN"
+              ]
+            }
+          },
+          "required": [
+            "trace_id",
+            "span_id",
+            "parent_span_id",
+            "dependency_service",
+            "duration_ms",
+            "status"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

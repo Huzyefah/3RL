@@ -1,0 +1,16 @@
+field,category,detector,tp,fp,fn,tn
+service_name,AnalyticsDashboard,ratio_ge_0.95,4,3,0,64
+service_name,AuthService,ratio_ge_0.95,2,3,0,58
+service_name,DataPipeline,ratio_ge_0.95,4,3,0,48
+service_name,NotificationHub,ratio_ge_0.95,2,3,0,59
+service_name,PaymentGateway,ratio_ge_0.95,4,1,0,56
+service_name,ReportGenerator,ratio_ge_0.95,2,2,0,57
+service_name,SearchAPI,ratio_ge_0.95,6,3,0,57
+service_name,UserProfileService,ratio_ge_0.95,4,4,0,51
+metric_type,connection_pool,ratio_ge_0.95,6,4,0,73
+metric_type,cpu_usage,ratio_ge_0.95,3,3,0,62
+metric_type,disk_io,ratio_ge_0.95,4,3,0,65
+metric_type,error_rate,ratio_ge_0.95,3,2,0,67
+metric_type,latency_p99,ratio_ge_0.95,5,2,0,54
+metric_type,memory_usage,ratio_ge_0.95,2,6,0,68
+metric_type,queue_depth,ratio_ge_0.95,5,2,0,61

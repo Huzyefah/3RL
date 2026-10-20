@@ -1,0 +1,37 @@
+{
+  "partitions": [
+    {
+      "partition": "train",
+      "runs": 24,
+      "rows": 4320,
+      "null_cells": 0,
+      "duplicate_with_run_step": 0,
+      "negative_features": 0,
+      "uniform_one_minute_steps": true,
+      "feature_schema_no_target_or_fault_fields": true
+    },
+    {
+      "partition": "validation",
+      "runs": 24,
+      "rows": 4320,
+      "null_cells": 0,
+      "duplicate_with_run_step": 0,
+      "negative_features": 0,
+      "uniform_one_minute_steps": true,
+      "feature_schema_no_target_or_fault_fields": true
+    },
+    {
+      "partition": "test",
+      "runs": 48,
+      "rows": 8640,
+      "null_cells": 0,
+      "duplicate_with_run_step": 0,
+      "negative_features": 0,
+      "uniform_one_minute_steps": true,
+      "feature_schema_no_target_or_fault_fields": true
+    }
+  ],
+  "cross_partition_exact_sequence_overlap": 0,
+  "partition_seed_sets_disjoint": true,
+  "causal_generator": true
+}

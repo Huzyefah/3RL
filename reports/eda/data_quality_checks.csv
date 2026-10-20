@@ -1,0 +1,14 @@
+check,count,meaning
+missing_cells,0,expected 0
+unparseable_timestamps,0,expected 0
+duplicate_rows,0,expected 0
+duplicate_timestamps,0,global only
+duplicates_without_timestamp,0,all other columns exact
+coarsened_near_duplicates,0,exclude timestamp; value/threshold whole; users/response bins 100; errors bins 5
+nonpositive_threshold,0,invalid for ratio
+negative_numeric_cells,0,semantic nonnegativity
+invalid_incident_flags,0,binary
+values_over_threshold,0,"diagnostic, not error"
+critical_label_ratio_disagreements,0,hypothesis discovered in full sample
+normal_label_ratio_disagreements,0,hypothesis discovered in full sample
+timezone_designators,0,0 implies unknown timezone

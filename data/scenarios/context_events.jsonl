@@ -1,0 +1,48 @@
+{"run_key": "train-000", "step": 56, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-001", "step": 69, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-002", "step": 63, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-003", "step": 58, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-004", "step": 61, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-005", "step": 56, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-006", "step": 59, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-007", "step": 60, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "train-012", "step": 57, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "train-013", "step": 49, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "train-014", "step": 56, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "train-015", "step": 58, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "validation-000", "step": 57, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-001", "step": 53, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-002", "step": 68, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-003", "step": 67, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-004", "step": 70, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-005", "step": 60, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-006", "step": 53, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-007", "step": 61, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "validation-012", "step": 56, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "validation-013", "step": 54, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "validation-014", "step": 50, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "validation-015", "step": 52, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-000", "step": 64, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-001", "step": 57, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-002", "step": 62, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-003", "step": 70, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-004", "step": 67, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-005", "step": 64, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-006", "step": 59, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-007", "step": 68, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-008", "step": 61, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-009", "step": 63, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-010", "step": 67, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-011", "step": 54, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-012", "step": 54, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-013", "step": 60, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-014", "step": 64, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-015", "step": 58, "kind": "log", "service": "provider-adapter", "code": "UPSTREAM_SLOW_RESPONSE", "message": "Observed upstream response duration elevated; cause unverified."}
+{"run_key": "test-024", "step": 54, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-025", "step": 64, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-026", "step": 60, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-027", "step": 48, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-028", "step": 57, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-029", "step": 50, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-030", "step": 51, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}
+{"run_key": "test-031", "step": 54, "kind": "event", "service": "checkout", "code": "CAMPAIGN_STARTED", "message": "Scheduled campaign; capacity increased."}

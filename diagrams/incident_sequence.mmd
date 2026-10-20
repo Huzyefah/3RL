@@ -1,0 +1,25 @@
+sequenceDiagram
+  participant R as Replay or source
+  participant A as API
+  participant P as PubSub
+  participant W as Worker
+  participant F as Firestore
+  participant L as Model
+  participant X as Action tool
+  R->>A: Typed current-window events
+  A->>P: Event IDs and namespace
+  P->>W: Authenticated push
+  W->>F: Dedup and commit window plus outbox
+  W-->>P: Ack after durable commit
+  P->>W: Investigation job
+  W->>F: Claim job lease and read evidence
+  W->>L: Evidence and read tool definitions
+  L-->>W: Select history or diagnostic tool
+  W->>F: Fetch authorized scoped evidence
+  W->>L: Tool result including contradictions
+  L-->>W: Validated assessment and action proposal
+  W->>F: Policy decision and action outbox
+  W->>X: Idempotent allowed action
+  X-->>W: Execution receipt
+  R->>A: Post-action simulated telemetry
+  W->>F: Verify outcome and persist audit

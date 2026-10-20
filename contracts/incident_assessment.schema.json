@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://payguard.example/schemas/assessment-1.0",
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "event_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "affected_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "anomaly_type": {
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "info",
+        "warning",
+        "critical"
+      ]
+    },
+    "evidence_grade": {
+      "enum": [
+        "insufficient",
+        "moderate",
+        "high"
+      ]
+    },
+    "confidence_probability": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "calibration_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "text",
+          "evidence_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "window_start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "window_end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "observed": {
+            "type": "number"
+          },
+          "baseline": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "source_event_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "service",
+          "metric",
+          "unit",
+          "window_start",
+          "window_end",
+          "observed",
+          "baseline",
+          "source_event_ids",
+          "fresh"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "root_cause_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hypothesis": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "hypothesis",
+              "verified",
+              "rejected"
+            ]
+          },
+          "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contradicting_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "uncertainty": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hypothesis",
+          "status",
+          "supporting_evidence_ids",
+          "contradicting_evidence_ids",
+          "uncertainty"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "historical_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "incident_id": {
+            "type": "string"
+          },
+          "similarity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "cause_verified": {
+            "type": "boolean"
+          },
+          "differences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "incident_id",
+          "similarity",
+          "cause_verified",
+          "differences"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "impact": {
+      "type": "object",
+      "properties": {
+        "measured": {
+          "type": "string"
+        },
+        "projected": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "measured",
+        "projected",
+        "assumptions"
+      ],
+      "additionalProperties": false
+    },
+    "recommended_action": {
+      "type": "object",
+      "properties": {
+        "catalog_action": {
+          "enum": [
+            "observe",
+            "create_internal_ticket",
+            "record_alert",
+            "recommend_runbook",
+            "simulate_retry_cap",
+            "request_human_review"
+          ]
+        },
+        "runbook_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "catalog_action",
+        "runbook_id",
+        "reason",
+        "evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "permitted_automated_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "human_approval_required": {
+          "type": "boolean"
+        },
+        "decision_reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "permitted_automated_action",
+        "human_approval_required",
+        "decision_reason"
+      ],
+      "additionalProperties": false
+    },
+    "action_receipts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "executed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "simulation": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "executed",
+              "unknown",
+              "failed"
+            ]
+          }
+        },
+        "required": [
+          "action_id",
+          "idempotency_key",
+          "executed_at",
+          "simulation",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "not_started",
+            "pending",
+            "verified",
+            "failed",
+            "inconclusive"
+          ]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "evidence_ids",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "lifecycle": {
+      "enum": [
+        "candidate",
+        "investigating",
+        "awaiting_approval",
+        "action_pending",
+        "verifying",
+        "resolved",
+        "escalated"
+      ]
+    }
+  },
+  "required": [
+    "incident_id",
+    "detected_at",
+    "event_time",
+    "affected_services",
+    "dependencies",
+    "anomaly_type",
+    "severity",
+    "evidence_grade",
+    "confidence_probability",
+    "calibration_version",
+    "uncertainties",
+    "summary",
+    "facts",
+    "evidence",
+    "root_cause_hypotheses",
+    "historical_references",
+    "impact",
+    "recommended_action",
+    "policy",
+    "action_receipts",
+    "verification",
+    "lifecycle"
+  ],
+  "additionalProperties": false
+}

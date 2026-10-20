@@ -1,0 +1,30 @@
+{
+  "version": "1.1",
+  "z_candidates": [
+    3,
+    4,
+    5,
+    6
+  ],
+  "chosen_z": 6.0,
+  "selection": "maximize validation early recall minus twice negative-run false-alarm rate; tie favors higher z",
+  "feature_allowlist": [
+    "arrival_tps",
+    "attempt_tps",
+    "provider_latency_ms",
+    "queue_depth",
+    "queue_wait_seconds",
+    "retry_fraction",
+    "error_fraction",
+    "capacity_tps"
+  ],
+  "warning_horizon_minutes": 20,
+  "cooldown_minutes": 10,
+  "seed_ranges": {
+    "train": 1000,
+    "validation": 2000,
+    "test": 9000
+  },
+  "heldout_shape": "sigmoid; same simulator family, not independent real-world validation",
+  "pilot_disclosure": "v0 test seeds 3000+ were inspected during exploratory development; v1.1 added a queue gate and throughput coupling; final seeds 9000+ were not used to tune"
+}

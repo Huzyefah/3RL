@@ -1,0 +1,196 @@
+{
+  "rows": 500,
+  "columns": 10,
+  "services": [
+    "AnalyticsDashboard",
+    "AuthService",
+    "DataPipeline",
+    "NotificationHub",
+    "PaymentGateway",
+    "ReportGenerator",
+    "SearchAPI",
+    "UserProfileService"
+  ],
+  "metrics": [
+    "connection_pool",
+    "cpu_usage",
+    "disk_io",
+    "error_rate",
+    "latency_p99",
+    "memory_usage",
+    "queue_depth"
+  ],
+  "incident_count": 28,
+  "incident_prevalence": 0.056,
+  "timestamp_start": "2026-08-01 00:34:35",
+  "timestamp_end": "2026-08-30 23:15:33",
+  "timezone": "unspecified; do not silently convert to UTC",
+  "source_order_chronological": false,
+  "global_gap_seconds": {
+    "count": 499.0,
+    "mean": 5184.885771543086,
+    "std": 5809.302333619032,
+    "min": 15.0,
+    "25%": 1237.5,
+    "50%": 3456.0,
+    "75%": 6812.0,
+    "max": 49702.0
+  },
+  "series_count": 56,
+  "series_records_min": 3,
+  "series_records_max": 15,
+  "series_median_gap_hours": 50.7225,
+  "ratio_by_alert": {
+    "CRITICAL": {
+      "min": 0.9501486393780014,
+      "max": 0.9957835558678847,
+      "mean": 0.9761100914362493
+    },
+    "NORMAL": {
+      "min": 0.6688642756680732,
+      "max": 0.7499339381661235,
+      "mean": 0.7077385991575778
+    },
+    "WARNING": {
+      "min": 0.7507651945780499,
+      "max": 0.9494510047648642,
+      "mean": 0.8351449295393968
+    }
+  },
+  "pearson_value_threshold": 0.964372204999099,
+  "baseline_all": [
+    {
+      "split": "all_exploratory",
+      "detector": "exceed_supplied_threshold",
+      "n": 500,
+      "tp": 0,
+      "fp": 0,
+      "fn": 28,
+      "tn": 472,
+      "precision": null,
+      "recall": 0.0,
+      "f1": 0.0,
+      "fpr": 0.0,
+      "recall_wilson": [
+        0.0,
+        0.12064720365810762
+      ],
+      "fpr_wilson": [
+        0.0,
+        0.008073274804052441
+      ]
+    },
+    {
+      "split": "all_exploratory",
+      "detector": "ratio_ge_0.75",
+      "n": 500,
+      "tp": 28,
+      "fp": 301,
+      "fn": 0,
+      "tn": 171,
+      "precision": 0.0851063829787234,
+      "recall": 1.0,
+      "f1": 0.1568627450980392,
+      "fpr": 0.6377118644067796,
+      "recall_wilson": [
+        0.8793527963418923,
+        1.0
+      ],
+      "fpr_wilson": [
+        0.5933976634310759,
+        0.6798024939322146
+      ]
+    },
+    {
+      "split": "all_exploratory",
+      "detector": "ratio_ge_0.90",
+      "n": 500,
+      "tp": 28,
+      "fp": 67,
+      "fn": 0,
+      "tn": 405,
+      "precision": 0.29473684210526313,
+      "recall": 1.0,
+      "f1": 0.45528455284552843,
+      "fpr": 0.1419491525423729,
+      "recall_wilson": [
+        0.8793527963418923,
+        1.0
+      ],
+      "fpr_wilson": [
+        0.11334888590597199,
+        0.17633070494947245
+      ]
+    },
+    {
+      "split": "all_exploratory",
+      "detector": "ratio_ge_0.95",
+      "n": 500,
+      "tp": 28,
+      "fp": 22,
+      "fn": 0,
+      "tn": 450,
+      "precision": 0.56,
+      "recall": 1.0,
+      "f1": 0.717948717948718,
+      "fpr": 0.046610169491525424,
+      "recall_wilson": [
+        0.8793527963418923,
+        1.0
+      ],
+      "fpr_wilson": [
+        0.030979176700233993,
+        0.06956184367293221
+      ]
+    },
+    {
+      "split": "all_exploratory",
+      "detector": "ratio_ge_0.98",
+      "n": 500,
+      "tp": 12,
+      "fp": 10,
+      "fn": 16,
+      "tn": 462,
+      "precision": 0.5454545454545454,
+      "recall": 0.42857142857142855,
+      "f1": 0.48,
+      "fpr": 0.0211864406779661,
+      "recall_wilson": [
+        0.2650829618073122,
+        0.609295210143846
+      ],
+      "fpr_wilson": [
+        0.011547851150833703,
+        0.03855621709372499
+      ]
+    },
+    {
+      "split": "all_exploratory",
+      "detector": "critical_label_diagnostic",
+      "n": 500,
+      "tp": 28,
+      "fp": 22,
+      "fn": 0,
+      "tn": 450,
+      "precision": 0.56,
+      "recall": 1.0,
+      "f1": 0.717948717948718,
+      "fpr": 0.046610169491525424,
+      "recall_wilson": [
+        0.8793527963418923,
+        1.0
+      ],
+      "fpr_wilson": [
+        0.030979176700233993,
+        0.06956184367293221
+      ]
+    }
+  ],
+  "source_sha256": "39dab9c508042cf577776b73e3f4044fa4093acd1ab5412e3e9faafef0bb4cfa",
+  "software": {
+    "python": "3.12.14",
+    "pandas": "2.2.3",
+    "numpy": "2.5.4",
+    "matplotlib": "3.11.2"
+  }
+}

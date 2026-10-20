@@ -1,0 +1,16 @@
+flowchart TD
+  E[Metric log event or span envelope] --> V{Schema auth timestamp units}
+  V -->|invalid| Q[Quarantine with reason]
+  V -->|valid| P[Publish event ID and replay namespace]
+  P --> N[Deduplicate and event time window]
+  N --> D[Statistical features and candidate]
+  D -->|persistent risk| I[Claim incident and create investigation outbox]
+  I --> T[Bounded evidence tools and historical retrieval]
+  T --> H[Schema validated model hypothesis]
+  H --> G{Deterministic action policy}
+  G -->|insufficient| OBS[Observe or human review]
+  G -->|allowed| A[Idempotent action worker]
+  A --> C[Receipt and fresh verification windows]
+  C --> RES{Recovered failed or unknown}
+  RES --> AUD[Append audit and collect feedback]
+  N --> RAW[Retained evidence and batch analytics]

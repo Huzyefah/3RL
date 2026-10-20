@@ -1,0 +1,75 @@
+[
+  {
+    "schema_version": "1.0",
+    "event_id": "synthetic-metric-01",
+    "namespace": "demo-run-001",
+    "tenant_id": "demo",
+    "event_time": "2026-09-01T01:10:00Z",
+    "received_at": "2026-09-01T01:10:01Z",
+    "source_time_raw": null,
+    "source_mode": "synthetic_replay",
+    "service_name": "provider-adapter",
+    "kind": "metric",
+    "payload": {
+      "name": "provider_latency_ms",
+      "value": 560.0,
+      "unit": "ms",
+      "window_seconds": 60
+    }
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "synthetic-log-01",
+    "namespace": "demo-run-001",
+    "tenant_id": "demo",
+    "event_time": "2026-09-01T01:10:00Z",
+    "received_at": "2026-09-01T01:10:01Z",
+    "source_time_raw": null,
+    "source_mode": "synthetic_replay",
+    "service_name": "provider-adapter",
+    "kind": "log",
+    "payload": {
+      "code": "UPSTREAM_SLOW_RESPONSE",
+      "severity": "WARNING",
+      "message": "Observed duration elevated; cause unverified."
+    }
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "synthetic-event-01",
+    "namespace": "demo-run-001",
+    "tenant_id": "demo",
+    "event_time": "2026-09-01T01:10:00Z",
+    "received_at": "2026-09-01T01:10:01Z",
+    "source_time_raw": null,
+    "source_mode": "synthetic_replay",
+    "service_name": "provider-adapter",
+    "kind": "event",
+    "payload": {
+      "name": "campaign_started",
+      "attributes": {
+        "planned": true
+      }
+    }
+  },
+  {
+    "schema_version": "1.0",
+    "event_id": "synthetic-span-01",
+    "namespace": "demo-run-001",
+    "tenant_id": "demo",
+    "event_time": "2026-09-01T01:10:00Z",
+    "received_at": "2026-09-01T01:10:01Z",
+    "source_time_raw": null,
+    "source_mode": "synthetic_replay",
+    "service_name": "provider-adapter",
+    "kind": "span",
+    "payload": {
+      "trace_id": "synthetic-trace-01",
+      "span_id": "adapter-01",
+      "parent_span_id": null,
+      "dependency_service": "provider-sim",
+      "duration_ms": 560,
+      "status": "OK"
+    }
+  }
+]

@@ -1,0 +1,16 @@
+stateDiagram-v2
+  [*] --> WarmingUp
+  WarmingUp --> Observing: baseline ready
+  Observing --> Candidate: persistent multivariate evidence
+  Candidate --> Investigating: claim episode
+  Investigating --> Investigating: bounded diagnostic or hypothesis revision
+  Investigating --> Observing: evidence weak
+  Investigating --> AwaitingApproval: real change proposed
+  Investigating --> ActionPending: safe internal action or simulation
+  AwaitingApproval --> ActionPending: scoped approval valid
+  AwaitingApproval --> Escalated: denied or expired
+  ActionPending --> Verifying: receipt reconciled
+  Verifying --> Resolved: fresh recovery confirmed
+  Verifying --> Escalated: failed or inconclusive
+  Resolved --> Observing: cooldown and recovery
+  Investigating --> Escalated: tool deadline or model failure

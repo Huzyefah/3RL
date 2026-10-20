@@ -1,0 +1,15 @@
+flowchart LR
+  UI[On call UI and replay controls] --> API[Cloud Run API and frontend]
+  R[Original CSV or synthetic replay] --> API
+  M[Cloud Monitoring adapter P1] --> API
+  API --> P[Pub Sub telemetry]
+  P --> W[Private Cloud Run worker]
+  W --> F[(Firestore state and outbox)]
+  W --> L[OpenAI API default or Gemini fallback]
+  W --> S[(Cloud Storage artifacts)]
+  W --> A[Internal tickets alerts and simulator]
+  A --> F
+  API --> F
+  W -. batch export P1 .-> B[(BigQuery analytics)]
+  SM[Secret Manager] --> W
+  W --> O[Cloud Logging and Monitoring]

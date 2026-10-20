@@ -1,0 +1,29 @@
+What Makes a Good Submission
+Judges will evaluate submissions on the following dimensions:
+Agentic Behavior: Does the solution demonstrate autonomous decision-making, tool use, self-correction, or multi-step planning — not just a single LLM call?
+Technical Depth: Is the architecture well-designed? Does it use GCP services effectively? Is the code production-quality?
+MVP Completeness: Can the solution be demonstrated end-to-end with the sample dataset? Does it solve the core problem?
+Scalability: Could this solution scale to production workloads? Is it designed for real-world deployment?
+Innovation: Does the approach show creative problem-solving or novel use of AI capabilities?
+
+
+PROBLEM STATEMENT PS-02
+Proactive Anomaly Detection & Issue Prevention Agent
+Difficulty: Hard    |    Category: AIOps / Observability
+The Problem
+Enterprise support teams operate reactively — they wait for users to report problems. By the time a ticket is filed, the user has already been impacted. Many issues leave early signals: rising error rates, latency spikes, unusual usage patterns, or failed authentication attempts. These signals go unmonitored or are buried in dashboards nobody watches.
+Your Challenge
+Build an agentic AI system that continuously monitors application telemetry (logs, metrics, traces), detects anomalous patterns before they become incidents, and autonomously triggers preventive actions — such as alerting on-call teams, scaling infrastructure, or creating pre-emptive support tickets with root-cause hypotheses.
+Technical Requirements
+Real-time ingestion of metrics, logs, and event streams
+Anomaly detection using statistical and LLM-based reasoning
+Autonomous action execution: alerting, ticket creation, suggested runbook steps
+Natural-language incident summaries generated for on-call engineers
+Historical pattern correlation: link current anomalies to past incidents
+
+Suggested GCP Tech Stack
+Vertex AI, BigQuery, Cloud Monitoring API, Pub/Sub, Cloud Functions, Gemini for summarization
+Sample Dataset
+ps02_system_telemetry.csv — 500 synthetic telemetry records with metrics, thresholds, and incident flags
+Evaluation Criteria
+Detection lead time (how far ahead of incident), false positive rate, quality of generated root-cause summaries
