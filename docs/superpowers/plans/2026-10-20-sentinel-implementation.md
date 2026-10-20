@@ -73,7 +73,7 @@ The repo has only planning docs and the PS-02 CSV. FP merges two competing plans
 | D12 | **RCA quality is P0:**<br>• top-1/top-3 code accuracy, root-service accuracy, groundedness % and Skeptic-induced misses are reported in Phase 8;<br>• the LLM judge and routing accuracy are P1. | FP §2 lists RCA quality as P0. |
 | D13 | **Merging a phase PR into the shared `main` is outward-facing.** The gate opens the PR with `gh pr create`. Merging needs the user's go-ahead, unless they grant standing approval at the start of execution. | — |
 | D15 | **OpenAI models only for every LLM use** (user instruction, 2026-10-20). No Vertex AI or Gemini. The fallback chain is OpenAI → deterministic template. The RCA judge is an OpenAI model of a different generation than the generators (`OPENAI_JUDGE_MODEL`), which replaces FP's "different model family" judge. This overrides FP §4.1, §7.2 I7 and §9 where they name Vertex Gemini. | User instruction. |
-| D14 | **The user approves each phase transition.** After every phase gate (protocol step 8), ask whether to continue to the next phase, and wait for the answer. Instruction given by the user on 2026-10-20. | Keeps the user in control of a long build. |
+| D14 | **Standing approval to run all phases (user, 2026-10-20, supersedes the earlier ask-after-each-phase rule).** After each phase gate: open the PR automatically, stacked on the previous phase's branch, and start the next phase without asking. Never merge to `main`: the user approves the stacked chain once. Stop only for destructive actions, security-sensitive actions, or a plan too broken to continue. | User instruction. |
 
 ### Timer table (enforced through `Clock`; test `test_timer_clock_assignment`)
 
@@ -254,7 +254,7 @@ Further rules:
    - Fill in REPORT.md and commit.
    - Push, then run `gh pr create` with a short body (summary, evidence folder link, REPORT.md).
    - Merge after the user's go-ahead (D13) and tag `phase-NN`.
-8. **Checkpoint with the user (mandatory, every phase):** stop after close-out. Report the gate result, the evidence folder, any skipped or deferred items, and the PR link. Then ask the user whether to continue to the next phase. **Do not start the next phase, create its branch or touch its files until the user says yes.** The user may also ask for changes to the finished phase first. This applies to Phase 8b and the conditional phases too. If 8b is skipped for lack of GCP access, say so at the Phase 8 checkpoint and ask how to proceed.
+8. **Phase transition (standing approval, D14):** after close-out, push, open the PR stacked on the previous phase's branch (`gh api` REST if GraphQL times out), log it in the SDD ledger, and start the next phase immediately on a new branch cut from this one. Never merge to `main`.
 
 **Time limits.** Each phase has an indicative time limit, listed with the phase. If a phase overruns its limit by more than 50%, stop and apply FP §12.4's cut order to that phase's scope. Record the cut in REPORT.md under "Skipped / deferred".
 

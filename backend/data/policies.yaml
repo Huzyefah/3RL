@@ -1,0 +1,54 @@
+# Policy as config (FP 8, foresight blueprint 8.3). policy_guard.py needs a test per key.
+kill_switch: false
+security_autonomy: shadow          # off | shadow | enforce
+approval_expiry_minutes: 10
+page_limit_per_team_per_hour: 6
+
+auto:
+  - create_ticket
+  - notify_channel
+  - attach_rca_runbook
+  - page_oncall
+  - schedule_recheck
+  - send_reminder
+  - escalate
+
+page_oncall: { severities: [P1, P2] }
+notify_channel: { severities: [P1, P2, P3] }
+schedule_recheck: { max_per_incident: 2 }
+
+hitl:
+  reroute_bank:   { require_healthy_target: true, healthy_u_lt: 0.75, window_min: 5, revertible: true }
+  otp_failover:   { require_healthy_target: true, healthy_u_lt: 0.75, window_min: 5, revertible: true }
+  scale_service:  { max_instances_cap: 5 }
+  restart_service: {}
+  rollback_deploy: { change_event_within_min: 30 }
+  disable_feature_flag: {}
+  close_ticket:   { propose_after_in_band_min: 15 }
+
+security:
+  throttle:
+    auth_fail_z_gte: 4
+    distinct_accounts_per_src_gte: 20
+    window_min: 5
+    max_sources: 50
+    max_login_share: 0.02
+    ttl_min: 15
+    never_allowlists: [corporate, partner_banks, processors]
+    verify: { after_s: 60, fail_rate_drop_gte: 0.5, legit_success_drop_lte: 0.01 }
+  step_up_mfa:
+    fails_per_account_gte: 5
+    distinct_srcs_gte: 3
+    window_min: 10
+    ttl_min: 30
+    require_healthy: [NotificationHub]
+  circuit_breaker_per_hour: 5
+  ttl_extensions_max: 1
+
+forbidden:
+  - change_ledger_balances
+  - delete_data
+  - block_all_logins
+  - change_limits
+  - failover_to_unhealthy_target
+  - act_on_non_sandbox_target

@@ -1,0 +1,3148 @@
+{
+  "ActionParams": {
+    "additionalProperties": false,
+    "description": "Union of all action parameters; unused ones are null.",
+    "properties": {
+      "bank": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "change_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "delay_minutes": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "instances": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "provider": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "rail": {
+        "anyOf": [
+          {
+            "enum": [
+              "IBFT",
+              "RAAST"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "service": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "source_ids": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "team": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "ttl_minutes": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "bank",
+      "rail",
+      "provider",
+      "service",
+      "instances",
+      "change_id",
+      "source_ids",
+      "team",
+      "ttl_minutes",
+      "delay_minutes"
+    ],
+    "type": "object"
+  },
+  "ActionRecord": {
+    "$defs": {
+      "ActionParams": {
+        "additionalProperties": false,
+        "description": "Union of all action parameters; unused ones are null.",
+        "properties": {
+          "bank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "change_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delay_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instances": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rail": {
+            "anyOf": [
+              {
+                "enum": [
+                  "IBFT",
+                  "RAAST"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ttl_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "bank",
+          "rail",
+          "provider",
+          "service",
+          "instances",
+          "change_id",
+          "source_ids",
+          "team",
+          "ttl_minutes",
+          "delay_minutes"
+        ],
+        "type": "object"
+      },
+      "ActionRequest": {
+        "properties": {
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "incident_id": {
+            "type": "string"
+          },
+          "params": {
+            "$ref": "#/$defs/ActionParams"
+          },
+          "rationale": {
+            "default": "",
+            "type": "string"
+          },
+          "requested_by": {
+            "default": "agent",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "create_ticket",
+              "notify_channel",
+              "attach_rca_runbook",
+              "page_oncall",
+              "schedule_recheck",
+              "send_reminder",
+              "escalate",
+              "reroute_bank",
+              "otp_failover",
+              "scale_service",
+              "restart_service",
+              "rollback_deploy",
+              "disable_feature_flag",
+              "close_ticket",
+              "throttle_source",
+              "step_up_mfa",
+              "change_ledger_balances",
+              "delete_data",
+              "block_all_logins",
+              "change_limits",
+              "failover_to_unhealthy_target",
+              "act_on_non_sandbox_target"
+            ],
+            "type": "string"
+          },
+          "window": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "type"
+        ],
+        "type": "object"
+      },
+      "GuardVerdict": {
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "AUTO",
+              "HITL",
+              "DENY"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed",
+          "mode",
+          "rule"
+        ],
+        "type": "object"
+      }
+    },
+    "properties": {
+      "action_id": {
+        "type": "string"
+      },
+      "created_ts": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "executed_ts": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "expires_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "idempotency_key": {
+        "type": "string"
+      },
+      "mode": {
+        "enum": [
+          "AUTO",
+          "HITL",
+          "DENY"
+        ],
+        "type": "string"
+      },
+      "request": {
+        "$ref": "#/$defs/ActionRequest"
+      },
+      "result": {
+        "default": "",
+        "type": "string"
+      },
+      "rollback_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "status": {
+        "default": "PENDING",
+        "enum": [
+          "PENDING",
+          "APPROVED",
+          "REJECTED",
+          "EXECUTED",
+          "EXPIRED",
+          "ROLLED_BACK",
+          "DENIED",
+          "FAILED"
+        ],
+        "type": "string"
+      },
+      "verdict": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/GuardVerdict"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      }
+    },
+    "required": [
+      "action_id",
+      "request",
+      "idempotency_key",
+      "mode",
+      "created_ts"
+    ],
+    "type": "object"
+  },
+  "ActionRequest": {
+    "$defs": {
+      "ActionParams": {
+        "additionalProperties": false,
+        "description": "Union of all action parameters; unused ones are null.",
+        "properties": {
+          "bank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "change_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delay_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instances": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rail": {
+            "anyOf": [
+              {
+                "enum": [
+                  "IBFT",
+                  "RAAST"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ttl_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "bank",
+          "rail",
+          "provider",
+          "service",
+          "instances",
+          "change_id",
+          "source_ids",
+          "team",
+          "ttl_minutes",
+          "delay_minutes"
+        ],
+        "type": "object"
+      }
+    },
+    "properties": {
+      "evidence_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "incident_id": {
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/$defs/ActionParams"
+      },
+      "rationale": {
+        "default": "",
+        "type": "string"
+      },
+      "requested_by": {
+        "default": "agent",
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "create_ticket",
+          "notify_channel",
+          "attach_rca_runbook",
+          "page_oncall",
+          "schedule_recheck",
+          "send_reminder",
+          "escalate",
+          "reroute_bank",
+          "otp_failover",
+          "scale_service",
+          "restart_service",
+          "rollback_deploy",
+          "disable_feature_flag",
+          "close_ticket",
+          "throttle_source",
+          "step_up_mfa",
+          "change_ledger_balances",
+          "delete_data",
+          "block_all_logins",
+          "change_limits",
+          "failover_to_unhealthy_target",
+          "act_on_non_sandbox_target"
+        ],
+        "type": "string"
+      },
+      "window": {
+        "default": "",
+        "type": "string"
+      }
+    },
+    "required": [
+      "incident_id",
+      "type"
+    ],
+    "type": "object"
+  },
+  "Approval": {
+    "properties": {
+      "action_id": {
+        "type": "string"
+      },
+      "approval_id": {
+        "type": "string"
+      },
+      "approver": {
+        "type": "string"
+      },
+      "comment": {
+        "default": "",
+        "type": "string"
+      },
+      "decision": {
+        "enum": [
+          "APPROVED",
+          "REJECTED"
+        ],
+        "type": "string"
+      },
+      "expires_at": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "ts": {
+        "format": "date-time",
+        "type": "string"
+      }
+    },
+    "required": [
+      "approval_id",
+      "action_id",
+      "approver",
+      "decision",
+      "ts",
+      "expires_at"
+    ],
+    "type": "object"
+  },
+  "CES": {
+    "description": "Common Event Schema (FP 4.3): every input is normalised to this.",
+    "properties": {
+      "attributes": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "direction": {
+        "anyOf": [
+          {
+            "enum": [
+              "higher_bad",
+              "lower_bad"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "event_id": {
+        "type": "string"
+      },
+      "kind": {
+        "enum": [
+          "metric",
+          "log",
+          "auth",
+          "change",
+          "ticket"
+        ],
+        "type": "string"
+      },
+      "metric": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "n_bad": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "n_total": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "redacted": {
+        "default": true,
+        "type": "boolean"
+      },
+      "seed": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "segment_key": {
+        "default": "*",
+        "type": "string"
+      },
+      "service": {
+        "type": "string"
+      },
+      "source": {
+        "type": "string"
+      },
+      "threshold": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "ts": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "value": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      }
+    },
+    "required": [
+      "event_id",
+      "ts",
+      "source",
+      "kind",
+      "service"
+    ],
+    "type": "object"
+  },
+  "Candidate": {
+    "$defs": {
+      "RiskFeatures": {
+        "description": "Risk = sigma(-3 + 1.5 pred + eta_term + z_term + 0.6 corrob + 1.2 band + 1.3 binom).",
+        "properties": {
+          "band": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "binom": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "corrob": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "eta_term": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "pred": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "z_term": {
+            "default": 0.0,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "properties": {
+      "band": {
+        "enum": [
+          "NORMAL",
+          "WARNING",
+          "CRITICAL"
+        ],
+        "type": "string"
+      },
+      "candidate_id": {
+        "type": "string"
+      },
+      "direction": {
+        "enum": [
+          "higher_bad",
+          "lower_bad"
+        ],
+        "type": "string"
+      },
+      "eta_minutes": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "evidence_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "features": {
+        "$ref": "#/$defs/RiskFeatures"
+      },
+      "metric": {
+        "type": "string"
+      },
+      "risk": {
+        "default": 0.0,
+        "type": "number"
+      },
+      "segment_key": {
+        "default": "*",
+        "type": "string"
+      },
+      "service": {
+        "type": "string"
+      },
+      "threshold": {
+        "type": "number"
+      },
+      "tier0": {
+        "default": false,
+        "type": "boolean"
+      },
+      "ts": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "u": {
+        "type": "number"
+      },
+      "value": {
+        "type": "number"
+      },
+      "z": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      }
+    },
+    "required": [
+      "candidate_id",
+      "ts",
+      "service",
+      "metric",
+      "value",
+      "threshold",
+      "direction",
+      "u",
+      "band"
+    ],
+    "type": "object"
+  },
+  "ChangeEvent": {
+    "properties": {
+      "change_id": {
+        "type": "string"
+      },
+      "description": {
+        "default": "",
+        "type": "string"
+      },
+      "kind": {
+        "default": "deploy",
+        "enum": [
+          "deploy",
+          "config",
+          "cert",
+          "flag",
+          "maintenance"
+        ],
+        "type": "string"
+      },
+      "service": {
+        "type": "string"
+      },
+      "ts": {
+        "format": "date-time",
+        "type": "string"
+      }
+    },
+    "required": [
+      "ts",
+      "service",
+      "change_id"
+    ],
+    "type": "object"
+  },
+  "CommsDraft": {
+    "additionalProperties": false,
+    "properties": {
+      "bank_partner_note": {
+        "type": "string"
+      },
+      "in_app_banner": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "in_app_banner",
+      "bank_partner_note"
+    ],
+    "type": "object"
+  },
+  "Feedback": {
+    "properties": {
+      "comment": {
+        "default": "",
+        "type": "string"
+      },
+      "feedback_id": {
+        "type": "string"
+      },
+      "incident_id": {
+        "type": "string"
+      },
+      "ts": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "verdict": {
+        "enum": [
+          "TRUE_POSITIVE",
+          "FALSE_POSITIVE",
+          "WRONG_CAUSE"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "feedback_id",
+      "incident_id",
+      "verdict"
+    ],
+    "type": "object"
+  },
+  "GuardVerdict": {
+    "properties": {
+      "allowed": {
+        "type": "boolean"
+      },
+      "mode": {
+        "enum": [
+          "AUTO",
+          "HITL",
+          "DENY"
+        ],
+        "type": "string"
+      },
+      "reason": {
+        "default": "",
+        "type": "string"
+      },
+      "rule": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "allowed",
+      "mode",
+      "rule"
+    ],
+    "type": "object"
+  },
+  "Hypothesis": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "enum": [
+          "RC-BANK",
+          "RC-DBPOOL",
+          "RC-OTP-PROVIDER",
+          "RC-QUEUE",
+          "RC-AUTH-ATTACK",
+          "RC-MEMLEAK",
+          "RC-CERT",
+          "RC-ABRUPT",
+          "RC-BENIGN"
+        ],
+        "type": "string"
+      },
+      "confidence": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "evidence_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "statement": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "confidence",
+      "statement",
+      "evidence_ids"
+    ],
+    "type": "object"
+  },
+  "Impact": {
+    "additionalProperties": false,
+    "properties": {
+      "customers_affected_est": {
+        "type": "integer"
+      },
+      "label": {
+        "const": "estimate",
+        "type": "string"
+      },
+      "pkr_at_risk_per_min": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "customers_affected_est",
+      "pkr_at_risk_per_min",
+      "label"
+    ],
+    "type": "object"
+  },
+  "IncidentCandidate": {
+    "$defs": {
+      "Candidate": {
+        "properties": {
+          "band": {
+            "enum": [
+              "NORMAL",
+              "WARNING",
+              "CRITICAL"
+            ],
+            "type": "string"
+          },
+          "candidate_id": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "higher_bad",
+              "lower_bad"
+            ],
+            "type": "string"
+          },
+          "eta_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "features": {
+            "$ref": "#/$defs/RiskFeatures"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "risk": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "segment_key": {
+            "default": "*",
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "tier0": {
+            "default": false,
+            "type": "boolean"
+          },
+          "ts": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "u": {
+            "type": "number"
+          },
+          "value": {
+            "type": "number"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "candidate_id",
+          "ts",
+          "service",
+          "metric",
+          "value",
+          "threshold",
+          "direction",
+          "u",
+          "band"
+        ],
+        "type": "object"
+      },
+      "RiskFeatures": {
+        "description": "Risk = sigma(-3 + 1.5 pred + eta_term + z_term + 0.6 corrob + 1.2 band + 1.3 binom).",
+        "properties": {
+          "band": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "binom": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "corrob": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "eta_term": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "pred": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "z_term": {
+            "default": 0.0,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "properties": {
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "type": "array"
+      },
+      "cascade_of": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "incident_id": {
+        "type": "string"
+      },
+      "opened_ts": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "risk": {
+        "type": "number"
+      },
+      "root_cause_service": {
+        "type": "string"
+      },
+      "segment_key": {
+        "default": "*",
+        "type": "string"
+      },
+      "tier0": {
+        "default": false,
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "incident_id",
+      "opened_ts",
+      "root_cause_service",
+      "candidates",
+      "risk"
+    ],
+    "type": "object"
+  },
+  "IncidentResult": {
+    "$defs": {
+      "ActionParams": {
+        "additionalProperties": false,
+        "description": "Union of all action parameters; unused ones are null.",
+        "properties": {
+          "bank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "change_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delay_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instances": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rail": {
+            "anyOf": [
+              {
+                "enum": [
+                  "IBFT",
+                  "RAAST"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ttl_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "bank",
+          "rail",
+          "provider",
+          "service",
+          "instances",
+          "change_id",
+          "source_ids",
+          "team",
+          "ttl_minutes",
+          "delay_minutes"
+        ],
+        "type": "object"
+      },
+      "ActionRecord": {
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "created_ts": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "executed_ts": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "AUTO",
+              "HITL",
+              "DENY"
+            ],
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/$defs/ActionRequest"
+          },
+          "result": {
+            "default": "",
+            "type": "string"
+          },
+          "rollback_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "status": {
+            "default": "PENDING",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED",
+              "EXECUTED",
+              "EXPIRED",
+              "ROLLED_BACK",
+              "DENIED",
+              "FAILED"
+            ],
+            "type": "string"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GuardVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "action_id",
+          "request",
+          "idempotency_key",
+          "mode",
+          "created_ts"
+        ],
+        "type": "object"
+      },
+      "ActionRequest": {
+        "properties": {
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "incident_id": {
+            "type": "string"
+          },
+          "params": {
+            "$ref": "#/$defs/ActionParams"
+          },
+          "rationale": {
+            "default": "",
+            "type": "string"
+          },
+          "requested_by": {
+            "default": "agent",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "create_ticket",
+              "notify_channel",
+              "attach_rca_runbook",
+              "page_oncall",
+              "schedule_recheck",
+              "send_reminder",
+              "escalate",
+              "reroute_bank",
+              "otp_failover",
+              "scale_service",
+              "restart_service",
+              "rollback_deploy",
+              "disable_feature_flag",
+              "close_ticket",
+              "throttle_source",
+              "step_up_mfa",
+              "change_ledger_balances",
+              "delete_data",
+              "block_all_logins",
+              "change_limits",
+              "failover_to_unhealthy_target",
+              "act_on_non_sandbox_target"
+            ],
+            "type": "string"
+          },
+          "window": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "type"
+        ],
+        "type": "object"
+      },
+      "Candidate": {
+        "properties": {
+          "band": {
+            "enum": [
+              "NORMAL",
+              "WARNING",
+              "CRITICAL"
+            ],
+            "type": "string"
+          },
+          "candidate_id": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "higher_bad",
+              "lower_bad"
+            ],
+            "type": "string"
+          },
+          "eta_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "features": {
+            "$ref": "#/$defs/RiskFeatures"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "risk": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "segment_key": {
+            "default": "*",
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "tier0": {
+            "default": false,
+            "type": "boolean"
+          },
+          "ts": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "u": {
+            "type": "number"
+          },
+          "value": {
+            "type": "number"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "candidate_id",
+          "ts",
+          "service",
+          "metric",
+          "value",
+          "threshold",
+          "direction",
+          "u",
+          "band"
+        ],
+        "type": "object"
+      },
+      "CommsDraft": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_partner_note": {
+            "type": "string"
+          },
+          "in_app_banner": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "in_app_banner",
+          "bank_partner_note"
+        ],
+        "type": "object"
+      },
+      "GuardVerdict": {
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "AUTO",
+              "HITL",
+              "DENY"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed",
+          "mode",
+          "rule"
+        ],
+        "type": "object"
+      },
+      "Hypothesis": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "RC-BANK",
+              "RC-DBPOOL",
+              "RC-OTP-PROVIDER",
+              "RC-QUEUE",
+              "RC-AUTH-ATTACK",
+              "RC-MEMLEAK",
+              "RC-CERT",
+              "RC-ABRUPT",
+              "RC-BENIGN"
+            ],
+            "type": "string"
+          },
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "statement": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "confidence",
+          "statement",
+          "evidence_ids"
+        ],
+        "type": "object"
+      },
+      "Impact": {
+        "additionalProperties": false,
+        "properties": {
+          "customers_affected_est": {
+            "type": "integer"
+          },
+          "label": {
+            "const": "estimate",
+            "type": "string"
+          },
+          "pkr_at_risk_per_min": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "customers_affected_est",
+          "pkr_at_risk_per_min",
+          "label"
+        ],
+        "type": "object"
+      },
+      "IncidentCandidate": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/$defs/Candidate"
+            },
+            "type": "array"
+          },
+          "cascade_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "incident_id": {
+            "type": "string"
+          },
+          "opened_ts": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "risk": {
+            "type": "number"
+          },
+          "root_cause_service": {
+            "type": "string"
+          },
+          "segment_key": {
+            "default": "*",
+            "type": "string"
+          },
+          "tier0": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "incident_id",
+          "opened_ts",
+          "root_cause_service",
+          "candidates",
+          "risk"
+        ],
+        "type": "object"
+      },
+      "RCA": {
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/$defs/RCAAction"
+            },
+            "type": "array"
+          },
+          "affected_segment": {
+            "type": "string"
+          },
+          "comms_draft": {
+            "$ref": "#/$defs/CommsDraft"
+          },
+          "eta_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "generated_by": {
+            "enum": [
+              "llm",
+              "statistical-fallback"
+            ],
+            "type": "string"
+          },
+          "goal": {
+            "type": "string"
+          },
+          "headline": {
+            "type": "string"
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/$defs/Hypothesis"
+            },
+            "type": "array"
+          },
+          "if_ignored": {
+            "type": "string"
+          },
+          "impact": {
+            "$ref": "#/$defs/Impact"
+          },
+          "incident_id": {
+            "type": "string"
+          },
+          "low_confidence": {
+            "type": "boolean"
+          },
+          "plan_versions": {
+            "type": "integer"
+          },
+          "root_cause_service": {
+            "type": "string"
+          },
+          "runbook_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "severity": {
+            "enum": [
+              "P1",
+              "P2",
+              "P3"
+            ],
+            "type": "string"
+          },
+          "similar_incidents": {
+            "items": {
+              "$ref": "#/$defs/SimilarIncident"
+            },
+            "type": "array"
+          },
+          "skeptic": {
+            "$ref": "#/$defs/SkepticReport"
+          },
+          "summary_business": {
+            "type": "string"
+          },
+          "summary_technical": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "goal",
+          "headline",
+          "severity",
+          "root_cause_service",
+          "affected_segment",
+          "eta_minutes",
+          "hypotheses",
+          "similar_incidents",
+          "runbook_steps",
+          "impact",
+          "actions",
+          "summary_technical",
+          "summary_business",
+          "comms_draft",
+          "if_ignored",
+          "skeptic",
+          "plan_versions",
+          "generated_by",
+          "low_confidence"
+        ],
+        "type": "object"
+      },
+      "RCAAction": {
+        "additionalProperties": false,
+        "properties": {
+          "params": {
+            "$ref": "#/$defs/ActionParams"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "create_ticket",
+              "notify_channel",
+              "attach_rca_runbook",
+              "page_oncall",
+              "schedule_recheck",
+              "send_reminder",
+              "escalate",
+              "reroute_bank",
+              "otp_failover",
+              "scale_service",
+              "restart_service",
+              "rollback_deploy",
+              "disable_feature_flag",
+              "close_ticket",
+              "throttle_source",
+              "step_up_mfa",
+              "change_ledger_balances",
+              "delete_data",
+              "block_all_logins",
+              "change_limits",
+              "failover_to_unhealthy_target",
+              "act_on_non_sandbox_target"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "params",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "RiskFeatures": {
+        "description": "Risk = sigma(-3 + 1.5 pred + eta_term + z_term + 0.6 corrob + 1.2 band + 1.3 binom).",
+        "properties": {
+          "band": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "binom": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "corrob": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "eta_term": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "pred": {
+            "default": 0.0,
+            "type": "number"
+          },
+          "z_term": {
+            "default": 0.0,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "SimilarIncident": {
+        "additionalProperties": false,
+        "properties": {
+          "fix": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "similarity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "similarity",
+          "fix"
+        ],
+        "type": "object"
+      },
+      "SkepticReport": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "verdict": {
+            "enum": [
+              "CONFIRMED",
+              "DISPUTED",
+              "BENIGN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "confidence"
+        ],
+        "type": "object"
+      },
+      "TraceStep": {
+        "properties": {
+          "actor": {
+            "type": "string"
+          },
+          "detail": {
+            "default": "",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "incident_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "detector",
+              "llm",
+              "tool_call",
+              "handoff",
+              "guard",
+              "action",
+              "note"
+            ],
+            "type": "string"
+          },
+          "seq": {
+            "type": "integer"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "seq",
+          "ts",
+          "actor",
+          "kind",
+          "summary"
+        ],
+        "type": "object"
+      }
+    },
+    "properties": {
+      "actions": {
+        "items": {
+          "$ref": "#/$defs/ActionRecord"
+        },
+        "type": "array"
+      },
+      "candidate": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/IncidentCandidate"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "incident_id": {
+        "type": "string"
+      },
+      "lead_time_min": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "opened_ts": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "rca": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/RCA"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "resolved_ts": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "status": {
+        "default": "OPEN",
+        "enum": [
+          "OPEN",
+          "WATCHING",
+          "ESCALATED",
+          "SUPPRESSED",
+          "RESOLVED"
+        ],
+        "type": "string"
+      },
+      "trace": {
+        "items": {
+          "$ref": "#/$defs/TraceStep"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "incident_id"
+    ],
+    "type": "object"
+  },
+  "LogRecord": {
+    "properties": {
+      "level": {
+        "default": "INFO",
+        "enum": [
+          "DEBUG",
+          "INFO",
+          "WARN",
+          "ERROR",
+          "FATAL"
+        ],
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "segment_key": {
+        "default": "*",
+        "type": "string"
+      },
+      "service": {
+        "type": "string"
+      },
+      "template_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "ts": {
+        "format": "date-time",
+        "type": "string"
+      }
+    },
+    "required": [
+      "ts",
+      "service",
+      "message"
+    ],
+    "type": "object"
+  },
+  "MetricPoint": {
+    "properties": {
+      "metric": {
+        "type": "string"
+      },
+      "n_bad": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "n_total": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "segment_key": {
+        "default": "*",
+        "type": "string"
+      },
+      "service": {
+        "type": "string"
+      },
+      "ts": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "ts",
+      "service",
+      "metric",
+      "value"
+    ],
+    "type": "object"
+  },
+  "PolicyState": {
+    "properties": {
+      "autonomous_actions_last_hour": {
+        "default": 0,
+        "type": "integer"
+      },
+      "kill_switch": {
+        "default": false,
+        "type": "boolean"
+      },
+      "pages_last_hour_by_team": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "security_autonomy": {
+        "default": "shadow",
+        "enum": [
+          "off",
+          "shadow",
+          "enforce"
+        ],
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "RCA": {
+    "$defs": {
+      "ActionParams": {
+        "additionalProperties": false,
+        "description": "Union of all action parameters; unused ones are null.",
+        "properties": {
+          "bank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "change_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delay_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instances": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rail": {
+            "anyOf": [
+              {
+                "enum": [
+                  "IBFT",
+                  "RAAST"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ttl_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "bank",
+          "rail",
+          "provider",
+          "service",
+          "instances",
+          "change_id",
+          "source_ids",
+          "team",
+          "ttl_minutes",
+          "delay_minutes"
+        ],
+        "type": "object"
+      },
+      "CommsDraft": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_partner_note": {
+            "type": "string"
+          },
+          "in_app_banner": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "in_app_banner",
+          "bank_partner_note"
+        ],
+        "type": "object"
+      },
+      "Hypothesis": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "RC-BANK",
+              "RC-DBPOOL",
+              "RC-OTP-PROVIDER",
+              "RC-QUEUE",
+              "RC-AUTH-ATTACK",
+              "RC-MEMLEAK",
+              "RC-CERT",
+              "RC-ABRUPT",
+              "RC-BENIGN"
+            ],
+            "type": "string"
+          },
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "statement": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "confidence",
+          "statement",
+          "evidence_ids"
+        ],
+        "type": "object"
+      },
+      "Impact": {
+        "additionalProperties": false,
+        "properties": {
+          "customers_affected_est": {
+            "type": "integer"
+          },
+          "label": {
+            "const": "estimate",
+            "type": "string"
+          },
+          "pkr_at_risk_per_min": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "customers_affected_est",
+          "pkr_at_risk_per_min",
+          "label"
+        ],
+        "type": "object"
+      },
+      "RCAAction": {
+        "additionalProperties": false,
+        "properties": {
+          "params": {
+            "$ref": "#/$defs/ActionParams"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "create_ticket",
+              "notify_channel",
+              "attach_rca_runbook",
+              "page_oncall",
+              "schedule_recheck",
+              "send_reminder",
+              "escalate",
+              "reroute_bank",
+              "otp_failover",
+              "scale_service",
+              "restart_service",
+              "rollback_deploy",
+              "disable_feature_flag",
+              "close_ticket",
+              "throttle_source",
+              "step_up_mfa",
+              "change_ledger_balances",
+              "delete_data",
+              "block_all_logins",
+              "change_limits",
+              "failover_to_unhealthy_target",
+              "act_on_non_sandbox_target"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "params",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "SimilarIncident": {
+        "additionalProperties": false,
+        "properties": {
+          "fix": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "similarity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "similarity",
+          "fix"
+        ],
+        "type": "object"
+      },
+      "SkepticReport": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "verdict": {
+            "enum": [
+              "CONFIRMED",
+              "DISPUTED",
+              "BENIGN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "confidence"
+        ],
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "actions": {
+        "items": {
+          "$ref": "#/$defs/RCAAction"
+        },
+        "type": "array"
+      },
+      "affected_segment": {
+        "type": "string"
+      },
+      "comms_draft": {
+        "$ref": "#/$defs/CommsDraft"
+      },
+      "eta_minutes": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "generated_by": {
+        "enum": [
+          "llm",
+          "statistical-fallback"
+        ],
+        "type": "string"
+      },
+      "goal": {
+        "type": "string"
+      },
+      "headline": {
+        "type": "string"
+      },
+      "hypotheses": {
+        "items": {
+          "$ref": "#/$defs/Hypothesis"
+        },
+        "type": "array"
+      },
+      "if_ignored": {
+        "type": "string"
+      },
+      "impact": {
+        "$ref": "#/$defs/Impact"
+      },
+      "incident_id": {
+        "type": "string"
+      },
+      "low_confidence": {
+        "type": "boolean"
+      },
+      "plan_versions": {
+        "type": "integer"
+      },
+      "root_cause_service": {
+        "type": "string"
+      },
+      "runbook_steps": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "severity": {
+        "enum": [
+          "P1",
+          "P2",
+          "P3"
+        ],
+        "type": "string"
+      },
+      "similar_incidents": {
+        "items": {
+          "$ref": "#/$defs/SimilarIncident"
+        },
+        "type": "array"
+      },
+      "skeptic": {
+        "$ref": "#/$defs/SkepticReport"
+      },
+      "summary_business": {
+        "type": "string"
+      },
+      "summary_technical": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "incident_id",
+      "goal",
+      "headline",
+      "severity",
+      "root_cause_service",
+      "affected_segment",
+      "eta_minutes",
+      "hypotheses",
+      "similar_incidents",
+      "runbook_steps",
+      "impact",
+      "actions",
+      "summary_technical",
+      "summary_business",
+      "comms_draft",
+      "if_ignored",
+      "skeptic",
+      "plan_versions",
+      "generated_by",
+      "low_confidence"
+    ],
+    "type": "object"
+  },
+  "RCAAction": {
+    "$defs": {
+      "ActionParams": {
+        "additionalProperties": false,
+        "description": "Union of all action parameters; unused ones are null.",
+        "properties": {
+          "bank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "change_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delay_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instances": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rail": {
+            "anyOf": [
+              {
+                "enum": [
+                  "IBFT",
+                  "RAAST"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ttl_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "bank",
+          "rail",
+          "provider",
+          "service",
+          "instances",
+          "change_id",
+          "source_ids",
+          "team",
+          "ttl_minutes",
+          "delay_minutes"
+        ],
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "params": {
+        "$ref": "#/$defs/ActionParams"
+      },
+      "rationale": {
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "create_ticket",
+          "notify_channel",
+          "attach_rca_runbook",
+          "page_oncall",
+          "schedule_recheck",
+          "send_reminder",
+          "escalate",
+          "reroute_bank",
+          "otp_failover",
+          "scale_service",
+          "restart_service",
+          "rollback_deploy",
+          "disable_feature_flag",
+          "close_ticket",
+          "throttle_source",
+          "step_up_mfa",
+          "change_ledger_balances",
+          "delete_data",
+          "block_all_logins",
+          "change_limits",
+          "failover_to_unhealthy_target",
+          "act_on_non_sandbox_target"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "params",
+      "rationale"
+    ],
+    "type": "object"
+  },
+  "RiskFeatures": {
+    "description": "Risk = sigma(-3 + 1.5 pred + eta_term + z_term + 0.6 corrob + 1.2 band + 1.3 binom).",
+    "properties": {
+      "band": {
+        "default": 0.0,
+        "type": "number"
+      },
+      "binom": {
+        "default": 0.0,
+        "type": "number"
+      },
+      "corrob": {
+        "default": 0.0,
+        "type": "number"
+      },
+      "eta_term": {
+        "default": 0.0,
+        "type": "number"
+      },
+      "pred": {
+        "default": 0.0,
+        "type": "number"
+      },
+      "z_term": {
+        "default": 0.0,
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "ScorecardRow": {
+    "properties": {
+      "fn": {
+        "default": 0,
+        "type": "integer"
+      },
+      "fp": {
+        "default": 0,
+        "type": "integer"
+      },
+      "median_lead_min": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "notes": {
+        "default": "",
+        "type": "string"
+      },
+      "precision": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "rca_accuracy": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "recall": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "split": {
+        "type": "string"
+      },
+      "system": {
+        "type": "string"
+      },
+      "tp": {
+        "default": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "system",
+      "split"
+    ],
+    "type": "object"
+  },
+  "SimilarIncident": {
+    "additionalProperties": false,
+    "properties": {
+      "fix": {
+        "type": "string"
+      },
+      "id": {
+        "type": "string"
+      },
+      "similarity": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "id",
+      "similarity",
+      "fix"
+    ],
+    "type": "object"
+  },
+  "SkepticReport": {
+    "additionalProperties": false,
+    "properties": {
+      "confidence": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "verdict": {
+        "enum": [
+          "CONFIRMED",
+          "DISPUTED",
+          "BENIGN"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "verdict",
+      "confidence"
+    ],
+    "type": "object"
+  },
+  "Ticket": {
+    "properties": {
+      "body": {
+        "type": "string"
+      },
+      "cc": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "incident_id": {
+        "type": "string"
+      },
+      "status": {
+        "default": "OPEN",
+        "enum": [
+          "OPEN",
+          "CLOSED"
+        ],
+        "type": "string"
+      },
+      "team": {
+        "type": "string"
+      },
+      "ticket_id": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "ticket_id",
+      "incident_id",
+      "team",
+      "title",
+      "body"
+    ],
+    "type": "object"
+  },
+  "TraceStep": {
+    "properties": {
+      "actor": {
+        "type": "string"
+      },
+      "detail": {
+        "default": "",
+        "type": "string"
+      },
+      "evidence_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "incident_id": {
+        "type": "string"
+      },
+      "kind": {
+        "enum": [
+          "detector",
+          "llm",
+          "tool_call",
+          "handoff",
+          "guard",
+          "action",
+          "note"
+        ],
+        "type": "string"
+      },
+      "seq": {
+        "type": "integer"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "ts": {
+        "format": "date-time",
+        "type": "string"
+      }
+    },
+    "required": [
+      "incident_id",
+      "seq",
+      "ts",
+      "actor",
+      "kind",
+      "summary"
+    ],
+    "type": "object"
+  }
+}
