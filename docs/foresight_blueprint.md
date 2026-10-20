@@ -8,10 +8,14 @@
 
 ## 0. TL;DR
 
-**Foresight** watches a fintech platform's telemetry (metrics, logs, auth events, traces) and **predicts incidents before they happen**. A team of specialised agents checks each prediction: one investigates, one recalls similar past incidents, and one tries to disprove the alert. The system then acts:
+**Foresight** is a **multi-agent system** that watches a fintech platform's telemetry (metrics, logs, auth events, traces) and **predicts incidents before they happen**. Statistics and ML only raise *signals*; the **agents own every decision**. An **Incident Commander agent** sets a goal for each signal ("prevent customer impact on PaymentGateway"), plans which specialist agents and tools to use, re-plans when evidence conflicts, chooses actions, and then checks whether those actions worked. Specialist agents investigate, recall similar past incidents (RAG), try to disprove the alert, read logs for new failure patterns, contain security threats, and chase open tickets.
 
-- **Autonomously** for safe, reversible actions: opening pre-emptive tickets, paging on-call, sending reminders and escalations, plus two **non-breaking security containments** (throttling a credential-stuffing source and forcing step-up MFA, both with automatic expiry).
-- **With a human in the loop** for anything that could break production, such as scaling, restarts, rollbacks or feature-flag changes.
+The agents act:
+
+- **Autonomously** for safe, reversible actions: opening pre-emptive tickets, paging on-call, sending reminders and escalations, scheduling their own re-checks, plus two **non-breaking security containments** (throttling a credential-stuffing source and forcing step-up MFA, both with automatic expiry).
+- **With a human in the loop** for anything that could break production, such as scaling, restarts, rollbacks or feature-flag changes. The agent prepares the full action plan, and a human approves it with one click.
+
+A deterministic **Policy Guard** sits between every agent decision and its execution. Agents decide; the guard only enforces hard limits.
 
 **One-line pitch:** *"Static thresholds fire with 0 minutes of warning, and 44% of their pages are false alarms. Foresight warns you minutes earlier, filters out the noise, and arrives with the root cause and the fix."*
 
@@ -74,7 +78,7 @@ Applied in `backend/data/services.yaml`. Names change; the data doesn't.
 | AnalyticsDashboard | **FraudRiskAnalytics** | Risk & Compliance | Tier 1 | LedgerSync |
 
 **Fintech impact model** (shown on every incident):
-`estimated value at risk per minute ≈ TPS × average transaction value × predicted failure rate`, plus `customers affected ≈ user_count_active × blast-radius factor`.
+`estimated value at risk per minute ≈ TPS × average transaction value × predicted failure rate`, plus `customers affected ≈ user_count_active × blast-radius factor`. Currency and average transaction value are config values (`IMPACT_CURRENCY`, default USD).
 
 **Root-cause taxonomy** (the label space for RCA scoring):
 
@@ -99,16 +103,17 @@ Applied in `backend/data/services.yaml`. Names change; the data doesn't.
 
 | # | Feature | Must / Should |
 |---|---|---|
-| F1 | **Multi-input ingestion**: CSV replay, live FinPay simulator, generic webhook connector, Cloud Monitoring API pull, user-reported ticket form | Must (replay + simulator + form); Should (webhook + Cloud Monitoring) |
-| F2 | **Statistical detection**: EWMA z-score, Holt trend forecast and **time-to-breach**, persistence/hysteresis | Must |
+| F1 | **Multi-input ingestion**: CSV replay, live FinPay simulator, generic webhook connector (Cloud Function), Cloud Monitoring API pull, user-reported ticket form | Must (all five; webhook and Cloud Monitoring are minimal versions) |
+| F2 | **Statistical signals**: EWMA z-score, Holt trend forecast and **time-to-breach**, persistence/hysteresis | Must |
 | F3 | **ML pipeline input**: Isolation Forest (multivariate) + gradient-boosted incident classifier, trained offline, served in-process | Must (one model); Should (both) |
-| F4 | **Agentic investigation**: Triage → (Investigator ∥ Historian) → Skeptic → Responder → Scribe | Must |
+| F4 | **Goal-driven multi-agent system**: Incident Commander plans, delegates to specialist agents (exposed to it as tools), re-plans on conflicting evidence, schedules its own re-checks, and verifies outcomes after acting (§7) | Must |
+| F4b | **LLM-based detection**: a Log Analyst agent spots new error patterns that statistics cannot see | Must |
 | F5 | **RAG similarity index** over past incidents and runbooks (embeddings + vector search) | Must |
 | F6 | **Autonomous actions**: tickets, alerts/paging, reminders, escalation, **2 security containments** | Must |
 | F7 | **Human-in-the-loop actions**: scale a Cloud Run service (real), restart, rollback (simulated) | Must (scale); Should (others) |
 | F8 | **Natural-language summaries**: technical (on-call) and business (support/management) versions | Must |
 | F9 | **Follow-up and escalation agent** on a schedule, SLA-driven, with time compression for the demo | Must |
-| F10 | **Ticket analytics**, organisation-wide and per department | Should |
+| F10 | **Ticket analytics**, organisation-wide and per department | Must (one page, 6 KPIs, department filter) |
 | F11 | **Platform ops dashboard**: routing accuracy, throughput, queue depth (required by the brief) | Must |
 | F12 | **Evaluation scorecard**: lead time, false-positive rate, precision/recall, RCA quality, baseline vs Foresight | Must (the key differentiator) |
 | F13 | **Feedback loop**: 👍/👎 on alerts adjusts per-signal sensitivity within bounds | Should |
@@ -117,11 +122,11 @@ Applied in `backend/data/services.yaml`. Names change; the data doesn't.
 ### 4.2 Out of scope (say so explicitly in the pitch)
 - Multi-tenancy, SSO and RBAC beyond a demo role switch.
 - Real Jira/ServiceNow/PagerDuty write-back (we ship Jira-compatible payloads and a mock sink).
-- Real Cloud Armor / IdP enforcement (enforced inside the FinPay simulator's edge layer; production adapters are listed in §13).
+- Real Cloud Armor / IdP enforcement (enforced inside the FinPay simulator's edge layer; production adapters are listed in §21).
 - Full distributed tracing (we keep a service dependency graph plus synthetic spans).
 
 ### 4.3 Explicit non-goals
-- Not a chatbot. The agents run unattended, triggered by events, and humans approve or reject actions instead of chatting.
+- Not a chatbot, and not a fixed pipeline with LLM steps. The agents run unattended, triggered by events and by their own scheduled re-checks. They choose their own path through the tools, and humans approve or reject actions instead of chatting.
 - No autonomous action that can deny service to a legitimate customer or change money movement.
 
 ---
@@ -151,20 +156,19 @@ flowchart LR
     DET["Signal Layer<br/>EWMA z, Holt forecast, time-to-breach"]
     ML["ML Layer<br/>IsolationForest + GBM P(incident)"]
     FUSE["Fusion + Grouping<br/>risk score, dedup, cascade link"]
-    ORCH["Agent Orchestrator"]
+    RT["Agent Runtime<br/>ReAct loop, working memory,<br/>watch scheduler, step budget"]
     POL["Policy Guard<br/>deterministic, tested"]
     EXE["Action Executors"]
     SSE["REST + SSE API"]
   end
 
   subgraph AG["Agents"]
-    TRI[Triage / Planner]
+    CMD["Incident Commander<br/>goal, plan, re-plan, decide, verify"]
     INV[Investigator]
     HIS["Historian (RAG)"]
     SKP[Skeptic]
-    RSP[Responder]
+    LOG["Log Analyst<br/>LLM-based detection"]
     SEC[Security Sentinel]
-    SCR[Scribe]
     FUP["Follow-up & Escalation"]
   end
 
@@ -193,16 +197,20 @@ flowchart LR
   UTK --> SSE
   T1 -->|push| NORM --> DET --> FUSE
   NORM --> ML --> FUSE
-  FUSE -->|risk >= tau| T2 -->|push| ORCH
-  ORCH --> TRI --> INV & HIS
-  INV & HIS --> SKP --> RSP --> POL
-  ORCH --> SEC --> POL
+  FUSE -->|risk >= tau| T2 -->|push| RT
+  NORM -->|new log patterns| LOG -->|signal| T2
+  RT --> CMD
+  CMD <-->|delegate / results| INV & HIS & SKP
+  RT -->|auth anomaly| SEC
+  CMD -->|decided actions| POL
+  SEC -->|decided containment| POL
   POL -->|auto| EXE
   POL -->|needs approval| T3
   T3 --> SSE
   EXE --> TKT & CHAT & PAGE & CR & EDGE
-  RSP --> SCR --> TKT
-  SCH -->|every 1 min| FUP --> TKT & CHAT
+  EXE -->|outcome| CMD
+  CMD -->|schedule re-check| RT
+  SCH -->|every 1 min| FUP --> POL
   HIS <--> BQ
   INV <--> BQ
   AG <--> GPT
@@ -216,7 +224,7 @@ flowchart LR
 
 | Unit | GCP service | Responsibility |
 |---|---|---|
-| `foresight-api` | Cloud Run (min 1, **max 1** for the demo, so hot state stays consistent) | Ingest push endpoint, detection, ML scoring, orchestrator and agents, policy guard, executors, REST + SSE |
+| `foresight-api` | Cloud Run (min 1, **max 1** for the demo, so hot state stays consistent) | Ingest push endpoint, signals, ML scoring, agent runtime and agents, policy guard, executors, REST + SSE |
 | `foresight-web` | Cloud Run | Next.js UI |
 | `finpay-sim` | Cloud Run | Mock fintech app (`/pay`, `/login`, `/search`), telemetry emitter, chaos endpoints, edge policy enforcement. Its own Cloud Run metrics are **real** and pulled via the Cloud Monitoring API |
 | `connector-webhook` | Cloud Functions (2nd gen) | Normalises third-party alert payloads into Pub/Sub |
@@ -234,11 +242,10 @@ sequenceDiagram
   participant S as FinPay Sim / Replayer
   participant P as Pub/Sub
   participant D as Signal + ML + Fusion
-  participant O as Orchestrator
+  participant C as Incident Commander
   participant I as Investigator
   participant H as Historian (RAG)
   participant K as Skeptic
-  participant R as Responder
   participant G as Policy Guard
   participant X as Executors
   participant U as UI / Chat
@@ -247,25 +254,33 @@ sequenceDiagram
   P->>D: push
   D->>D: EWMA z, Holt slope, time-to-breach, ML P(incident)
   D->>D: fuse into risk, group by service + dependency window
-  D->>O: anomaly.candidate (risk 0.78, TTB 9 min)
-  O->>O: Triage agent plans tools and agents
-  par parallel
-    O->>I: investigate(service, window)
-    I->>I: tools: metrics, logs, deps, changes, ml_explain
-    O->>H: similar_incidents(signature)
+  D->>C: signal (risk 0.78, TTB 9 min)
+  C->>C: set goal, write plan (investigate + recall, then challenge)
+  par Commander delegates in parallel
+    C->>I: investigate(service, window)
+    I->>I: own tool loop: metrics, logs, deps, changes, ml_explain
+    C->>H: recall(signature)
     H->>H: embed and vector search, top-3 + runbooks
   end
-  I-->>O: hypotheses + evidence IDs
-  H-->>O: matches (INC-0007, similarity 0.84)
-  O->>K: try to disprove (batch window? single signal? deploy?)
-  K-->>O: verdict CONFIRMED, confidence 0.81
-  O->>R: propose actions
-  R->>G: [create_ticket, page_oncall, scale_service]
+  I-->>C: hypotheses + evidence IDs
+  H-->>C: matches (INC-0007, similarity 0.84)
+  C->>K: challenge(hypotheses)
+  K-->>C: DISPUTED: AuthService also degrading, root cause may be upstream
+  C->>C: re-plan: evidence conflicts
+  C->>I: investigate(AuthService, dependency edge)
+  I-->>C: upstream pool leak confirmed
+  C->>K: challenge(revised hypothesis)
+  K-->>C: CONFIRMED, confidence 0.81
+  C->>C: decide actions + route to Identity team
+  C->>G: [create_ticket, page_oncall, scale_service]
   G->>X: auto: create_ticket, page_oncall
-  G->>U: approval needed: scale_service
+  G->>U: approval needed: scale_service (plan prepared by agent)
   X->>U: SSE: ticket + summary + countdown
   U->>G: Approve (user, reason)
-  G->>X: scale_service, then verify, then audit
+  G->>X: scale_service
+  X-->>C: action done
+  C->>C: schedule re-check in 3 min
+  C->>C: re-check: TTB gone, pool falling, goal met, hand ticket to Follow-up agent
 ```
 
 ### 5.4 Common Event Schema (CES)
@@ -302,6 +317,9 @@ Every input is normalised to this before anything else touches it.
 | **L1 Statistical** | Per (service, metric): EWMA mean/var of `ratio = value/threshold`; z-score; persistence = N of last M points above band | `z`, `persist` | Cheap, explainable, runs on every event |
 | **L2 Forecast** | Holt linear (level + trend) on `ratio`; `TTB = (0.95 − ratio_now) / slope` if `slope > 0` and trend R² ≥ 0.6 over the last k points | `ttb_minutes`, `slope` | **This is what produces lead time.** We alert on the predicted breach, not the breach itself |
 | **L3 ML** | (a) IsolationForest on multivariate feature vector; (b) GradientBoosting `P(incident)` trained on the train split | `anomaly_score`, `p_incident`, top features (SHAP-lite via feature importances) | Captures the multivariate signal (response time ↑, users ↓, per-metric priors) |
+| **L4 LLM (Log Analyst agent)** | Logs are clustered into templates (a Drain-style masker). A template that is **new**, or whose rate jumps more than 5× its baseline, is sent in batches every 30 s to the Log Analyst. The agent decides whether it signals a failure mode (e.g. `"SSL handshake failed: certificate expired"` with flat metrics), assigns a root-cause code, and can emit a signal on its own | `log_signal {service, template, code, severity, rationale}` | Finds problems that never show up in metrics (cert expiry, config errors, third-party API changes), which satisfies "LLM-based reasoning" for detection, not just explanation |
+
+Layers L1–L3 are cheap code that runs on every event and produces **signals**. They never act. Every signal goes to the agents, and every decision is made there.
 
 **Features for ML:** `ratio`, `Δratio_5`, `Δratio_15`, `slope`, `z`, `metric_type` one-hot, `service` one-hot, `response_time_ms` (and its z), `error_count_last_hour` (and its Δ), `user_count_active` (and its Δ), `hour_of_day`, `is_batch_window`, `dependent_service_max_ratio`.
 
@@ -322,8 +340,9 @@ candidate if  risk ≥ τ (default 0.55)  AND  persist ≥ 2 of 3
 1. Persistence and hysteresis (no single-point alerts).
 2. Known-pattern suppression: batch windows (e.g. RegulatoryReporting `disk_io` 01:00–03:00), maintenance calendar, deploy freeze.
 3. **Skeptic agent** (LLM + tools) argues against the alert using evidence.
-4. Feedback loop: 👎 raises that signal's τ by +0.05 (capped at +0.15, decays over 24h).
-5. **Safety override:** the Skeptic can downgrade but **cannot suppress** a candidate with `risk ≥ 0.85` on a Tier-0 service. It is still sent, flagged "low confidence". We would rather explain one extra alert than miss a payment outage.
+4. **Watch instead of page:** when evidence is ambiguous, the Commander can choose `schedule_recheck` instead of alerting. It opens a silent watch and re-evaluates in N minutes with fresh data. This is the agentic answer to the lead-time vs false-positive trade-off: the system neither pages on a hunch nor ignores the signal.
+5. Feedback loop: 👎 raises that signal's τ by +0.05 (capped at +0.15, decays over 24h).
+6. **Safety override:** the Skeptic can downgrade but **cannot suppress** a candidate with `risk ≥ 0.85` on a Tier-0 service. It is still sent, flagged "low confidence". We would rather explain one extra alert than miss a payment outage.
 
 ### 6.4 Metric definitions (put these on the scorecard verbatim)
 - **Lead time** for an incident at `t_inc` = `t_inc − t_first_alert` for the first Foresight alert on the root-cause service or its dependents within `[t_inc − 60 min, t_inc]`. Report median and p10. No alert means a missed incident.
@@ -336,25 +355,52 @@ candidate if  risk ≥ τ (default 0.55)  AND  persist ≥ 2 of 3
 
 ## 7. Agent design
 
-### 7.1 Orchestration choice
-**Recommendation: a hand-rolled async orchestrator (~250 lines) with OpenAI function calling.** It is the lowest-risk option for a 4-hour build and fully debuggable. Each agent is `{system prompt, allowed tools, output JSON schema, step budget}`. Google ADK is the scale path (§13). Use it from the start only if someone on the team already knows it well.
+### 7.1 Why this is agentic and not a pipeline
+The judging rule is *"agents should plan, use tools, and take actions"*. Foresight meets it with five properties, and each one shows up in the UI's agent trace:
 
-**Guardrails on every agent run:** max 6 tool calls, 20 s timeout per LLM call, 45 s total budget, temperature 0.2, JSON-schema structured output, and a fallback to a deterministic template summary if the LLM fails. Every step is persisted to `agent_traces`.
+| Property | What it means in Foresight | Where a judge sees it |
+|---|---|---|
+| **Goal-driven** | Every signal becomes an incident with an explicit goal, e.g. *"prevent PaymentGateway customer impact within the 9-minute forecast window"*. The Commander keeps working until the goal is met, dismissed, or handed to a human | Goal banner on incident detail |
+| **Plans and re-plans** | The Commander writes a plan, runs it, and **changes the plan** when results conflict (Skeptic disputes, a new upstream signal, an action that didn't work). Nothing is hard-wired: it may skip the Historian for a known batch pattern or call the Investigator twice | Plan v1 → v2 diff in the trace |
+| **Uses tools** | Every agent works in a tool-calling loop over real data (BigQuery queries, vector search, Cloud Monitoring, Cloud Run API, simulator edge API) | Tool calls with inputs and outputs in the trace |
+| **Takes actions** | Agents choose the actions and their scope: ticket, page, throttle, step-up, scale request, reminder, escalation, `schedule_recheck`. The Policy Guard only allows, blocks or routes to approval | Actions log + Policy Guard verdicts |
+| **Closes the loop** | After acting, the agent **observes** the outcome (did TTB go away? did auth failures drop?) and decides what to do next: done, escalate, roll back, or try the next runbook step | "Verification" step in the trace |
 
-### 7.2 Agent roster
+**Division of labour:** code produces signals and enforces limits; **agents decide**. The LLM never runs unbounded. It works inside step budgets, tool allowlists and the Policy Guard.
 
-| Agent | Type | Trigger | Tools | Output |
+### 7.2 Agent runtime
+**Recommendation: a hand-rolled async ReAct runtime (~300 lines) with OpenAI function calling.** It is the lowest-risk option for a 4-hour build and fully debuggable. Google ADK is the scale path (§21); use it from the start only if someone on the team already knows it well.
+
+- **Agent definition:** `{goal template, system prompt, allowed tools, output JSON schema, step budget}`.
+- **Agents as tools:** the Commander sees each specialist agent as a tool (`investigate`, `recall_similar`, `challenge`, `analyse_logs`). A specialist runs its own tool loop and returns structured output. This is the standard hierarchical multi-agent pattern.
+- **Working memory:** each incident has a scratchpad (goal, plan versions, evidence store, decisions, open watches) persisted to `agent_traces`. **Long-term memory** is the RAG corpus, which resolved incidents are added to.
+- **Watch scheduler:** `schedule_recheck(incident_id, after_min, reason)` puts a timer in the runtime. When it fires, the Commander resumes with fresh data. This is how the agent waits and observes without paging.
+- **Concurrency:** one Commander run per incident, with a lock on `incident_id`. New signals for the same incident are queued into the running Commander's memory instead of starting a second run.
+- **Guardrails on every run:** Commander max 10 steps and specialists max 6 tool calls; 20 s timeout per LLM call; 60 s wall clock per Commander cycle; temperature 0.2; JSON-schema structured output. If the LLM fails, a deterministic fallback runs: create a ticket from a template with the raw signals and page on-call for P1. **The system degrades to "classic alerting", never to silence.**
+
+### 7.3 Agent roster (7 agents)
+
+| Agent | Decides on its own | Trigger | Tools | Output |
 |---|---|---|---|---|
-| **Triage / Planner** | LLM | `anomaly.candidate` | `get_candidate`, `get_service_meta`, `list_open_incidents` | Plan: which agents and tools, severity guess, dedupe decision (`new` / `attach_to INC-x`) |
-| **Investigator** | LLM + tools | plan | `query_metrics(svc, metric, window)`, `get_logs(svc, window, level)`, `get_dependencies(svc)`, `get_recent_changes(svc)`, `get_ml_explanation(candidate_id)`, `get_auth_stats(window)` | Ranked hypotheses `[{root_cause_code, confidence, evidence_ids[], reasoning}]` |
-| **Historian** | RAG | plan (parallel with Investigator) | `search_similar_incidents(signature_text, k=3, filters)`, `get_runbook(root_cause_code)` | Matches with similarity, past fix, time-to-resolve, runbook steps |
-| **Skeptic** | LLM + tools | after Investigator + Historian | `is_batch_window`, `get_maintenance_calendar`, `get_seasonal_baseline`, `count_corroborating_signals`, `get_feedback_history` | `{verdict: CONFIRMED / DOWNGRADE / DISMISS, confidence, counter_evidence[]}` |
-| **Responder** | LLM, constrained | after Skeptic | `list_allowed_actions(severity, service)`, `get_oncall(team)`, `estimate_impact(svc)` | Proposed actions, each with rationale and expected effect (passed to the Policy Guard, never executed directly) |
-| **Security Sentinel** | Rules + ML first, LLM explains | auth-event anomaly | `get_auth_stats`, `get_ip_reputation` (mock), `check_allowlist`, `apply_throttle`, `apply_step_up`, `verify_containment`, `rollback_containment` | Containment actions + explanation |
-| **Scribe** | LLM | after decisions | `render_ticket`, `post_chat` | Ticket body, **technical summary** (on-call), **business summary** (support/management), timeline |
-| **Follow-up & Escalation** | Scheduled agent (rules decide, LLM writes) | Cloud Scheduler every 1 min | `list_open_tickets`, `get_sla_status`, `get_current_metrics`, `send_reminder`, `escalate`, `propose_resolution` | Reminders, escalations, "looks resolved, verify and close?" proposals |
+| **Incident Commander** (planner) | Goal, plan and re-plan; dedupe/merge with open incidents; severity; root-cause service and routing; **which actions to request and with what scope**; when to wait (`schedule_recheck`) and when to stop | signal on `anomaly.candidate`; scheduled re-check; action outcome | Specialists as tools: `investigate`, `recall_similar`, `challenge`, `analyse_logs`. Plus `get_service_meta`, `list_open_incidents`, `estimate_impact`, `get_oncall`, `list_allowed_actions`, `request_action`, `schedule_recheck`, `write_ticket` (technical + business summary), `post_chat` | Incident record, plan versions, actions requested, summaries |
+| **Investigator** | Which metrics, logs and dependencies to examine, and when it has enough evidence | Commander | `query_metrics(svc, metric, window)`, `get_logs(svc, window, level)`, `get_dependencies(svc)`, `get_recent_changes(svc)`, `get_ml_explanation(id)`, `get_auth_stats(window)`, `get_cloud_monitoring(svc)` | Ranked hypotheses `[{code, confidence, evidence_ids[], reasoning}]` |
+| **Historian** (RAG) | Query rewriting and filters; whether a match is relevant | Commander | `search_similar_incidents(text, k, filters)`, `get_runbook(code)` | Matches with similarity, past fix, time to resolve, runbook steps |
+| **Skeptic** | Verdict: whether the evidence actually supports the alert | Commander (can be called more than once) | `is_batch_window`, `get_maintenance_calendar`, `get_seasonal_baseline`, `count_corroborating_signals`, `get_feedback_history` | `{verdict: CONFIRMED / DISPUTED / DISMISS, confidence, counter_evidence[], what_would_convince_me}` |
+| **Log Analyst** | Whether a new or surging log pattern is a failure mode; emits its own signals | log-template novelty batches (§6.1 L4); Commander | `get_template_samples`, `get_template_history`, `get_metrics_snapshot` | `log_signal` or `benign` with rationale |
+| **Security Sentinel** | Whether an auth anomaly is an attack, which containment (throttle, step-up or both), **scope** (which sources and accounts) and TTL; after verification: keep, extend once, or roll back | auth-stream anomaly | `get_auth_stats`, `get_ip_reputation` (mock), `check_allowlist`, `check_service_health`, `request_action(throttle_source / step_up_mfa)`, `verify_containment`, `request_rollback` | Containment decision + explanation (see §8.2) |
+| **Follow-up & Escalation** | Per open ticket: remind, escalate, wait, or propose resolution, based on SLA **and** live telemetry (e.g. escalate early if the forecast is worsening; hold off if metrics recovered) | Cloud Scheduler every 1 min | `list_open_tickets`, `get_sla_status`, `get_current_metrics`, `send_reminder`, `escalate`, `propose_resolution` | Context-aware reminders, escalations, close proposals. The Policy Guard enforces an **SLA floor**: a breached SLA always escalates, whatever the agent says |
 
-### 7.3 RCA output contract (forces grounded summaries)
+Ticket writing and chat posting are Commander tools, and choosing actions is a Commander decision. Keeping both with the planner avoids hand-offs to separate writer or responder agents.
+
+### 7.4 Commander decision examples (put these three in the demo)
+
+| Situation | Commander's plan path | Outcome |
+|---|---|---|
+| PaymentGateway pool climbing, Skeptic disputes because AuthService is also degrading | investigate → recall → challenge (DISPUTED) → **re-plan**: investigate AuthService → challenge (CONFIRMED) | P1 routed to **Identity & Security**, Payments CC'd; scale request for PaymentGateway as a holding measure |
+| RegulatoryReporting `disk_io` spike at 02:00 | challenge first (cheap) → DISMISS: known batch window, no corroboration | No ticket; logged as "false positive avoided" |
+| SearchAPI latency drifting, TTB 25 min, weak corroboration | investigate → evidence ambiguous → **`schedule_recheck(5 min)`** → re-check: slope steeper, errors rising → act | P2 ticket raised with ~18 min of lead time and no premature page |
+
+### 7.5 RCA output contract (forces grounded summaries)
 
 ```json
 {
@@ -372,7 +418,9 @@ candidate if  risk ≥ τ (default 0.55)  AND  persist ≥ 2 of 3
   ],
   "similar_incidents": [{"id": "INC-0007", "similarity": 0.84, "fix": "Recycle pool, raise maxPoolSize 20→40"}],
   "runbook_steps": ["...", "..."],
-  "impact": {"customers_at_risk": 4057, "value_at_risk_per_min": "PKR 1.2M (est.)"},
+  "impact": {"customers_at_risk": 4057, "value_at_risk_per_min": "USD 4,300 (est.)"},
+  "goal": "Prevent PaymentGateway customer impact within the 9-minute window",
+  "plan_versions": 2,
   "if_ignored": "Projected breach at 10:47, then payment auth failures at an estimated 30%.",
   "skeptic": {"verdict": "CONFIRMED", "confidence": 0.81}
 }
@@ -394,6 +442,7 @@ candidate if  risk ≥ τ (default 0.55)  AND  persist ≥ 2 of 3
 | Attach RCA + runbook to ticket | **AUTO** | always | yes | real |
 | Reminders and escalations | **AUTO** | SLA policy | n/a | real |
 | Link user-reported ticket to an open incident | **AUTO** | similarity ≥ 0.8 | yes | real |
+| Schedule own re-check / open a silent watch | **AUTO** | at most 3 re-checks per incident, then it must decide | yes | real |
 | 🔐 **Throttle suspicious login source** | **AUTO (security)** | see §8.2 | yes, TTL 15 min | enforced in `finpay-sim` edge |
 | 🔐 **Force step-up MFA on targeted accounts** | **AUTO (security)** | see §8.2 | yes, TTL 30 min | enforced in `finpay-sim` auth |
 | Scale service (Cloud Run min/max instances) | **HITL** | P1/P2 capacity root cause | yes | **real** Cloud Run Admin API on `finpay-sim` |
@@ -403,18 +452,28 @@ candidate if  risk ≥ τ (default 0.55)  AND  persist ≥ 2 of 3
 | Close ticket | **HITL** | Follow-up agent proposes it, human confirms | yes | real |
 | Block all logins, delete data, change payment routing or limits | **FORBIDDEN** | — | — | — |
 
+**About scaling:** the problem statement lists "scaling infrastructure" as a preventive action. Per our autonomy rule, scaling is **HITL**, but the agent does all the work: it detects the need, sizes the change (e.g. min instances 1 → 3, capped at 5), estimates the effect, and submits a ready-to-run request that a human approves with one click from the UI or the Chat card. After approval the Commander verifies the effect. The scale path (§21) adds a per-tenant "pre-approved runbook" option that lets customers promote specific bounded actions to AUTO.
+
 ### 8.2 The two autonomous security actions: why they can't break anything
 
-The design choice that matters: **deterministic rules decide whether to act. The LLM only explains.** No LLM output can trigger a containment on its own.
+The design choice that matters: **the Security Sentinel agent decides; the Policy Guard holds a veto.** The agent judges whether the pattern is an attack, picks the containment, its scope and TTL, and later chooses to keep, extend or roll back based on what it observes. The guard executes a request **only if hard, measurable preconditions also hold**. So an LLM mistake can make the system *not act* (it falls back to paging a human), but it can never make it act wrongly.
+
+```
+Sentinel (agent): "credential stuffing from 25 sources hitting 300 accounts"
+   → request_action(throttle_source, sources=[...25], ttl=15m, rationale, evidence_ids)
+Policy Guard (code): preconditions ✓  caps ✓  allowlist ✓  circuit breaker ✓  → EXECUTE
+   ... 60 s later ...
+Sentinel: verify_containment → fail rate −78%, legit success −0.2% → decision: KEEP
+```
 
 **A. Throttle source (rate-limit, not block)**
-- **Trigger, all of:** auth-failure rate z ≥ 4; at least 20 distinct accounts tried per source IP/ASN in 5 min; ML `p_attack ≥ 0.8`.
+- **Guard preconditions, all of** (on top of the agent's decision): auth-failure rate z ≥ 4; at least 20 distinct accounts tried per source IP/ASN in 5 min; ML `p_attack ≥ 0.8`.
 - **Effect:** limit matching sources to 3 login attempts per minute. A real user behind a shared NAT can still log in.
 - **Scope caps:** at most 50 sources and at most 2% of login traffic affected. If the cap is exceeded, the action escalates to a human instead.
 - **Never applied to:** corporate ranges, partner banks, payment processors, health-check IPs (allowlist).
 
 **B. Step-up MFA on targeted accounts**
-- **Trigger:** an account receives at least 5 failed logins from at least 3 distinct sources in 10 min.
+- **Guard preconditions** (on top of the agent's decision): an account receives at least 5 failed logins from at least 3 distinct sources in 10 min.
 - **Effect:** the next login requires OTP. Nothing is locked and no session is killed.
 - **Dependency check:** skipped, with a page to a human instead, if NotificationHub (OTP) is degraded. Step-up MFA must never lock users out because OTP delivery is down.
 
@@ -425,7 +484,8 @@ The design choice that matters: **deterministic rules decide whether to act. The
 | Shadow mode | `SECURITY_AUTONOMY=shadow` logs what it *would* do. Turned on in the demo to show it, then switched to `enforce` |
 | Idempotency | action key = hash(type, scope, window), so a repeated event cannot double-apply |
 | TTL auto-expiry | expiry is stored with the action; a sweeper removes it even if the agent crashes |
-| Post-action verification | after 60 s: failure rate must drop ≥ 50% **and** legitimate login success must stay ≥ baseline − 1%. Otherwise **auto-rollback** and page a human |
+| Post-action verification | the Sentinel agent checks after 60 s. The guard also enforces it independently: failure rate must drop ≥ 50% **and** legitimate login success must stay ≥ baseline − 1%. Otherwise **auto-rollback** and page a human, even if the agent wants to keep it |
+| Extension limit | the agent may extend a TTL **once**; any further extension needs a human |
 | Circuit breaker | max 5 autonomous security actions per hour; then it falls back to HITL |
 | Kill switch | one toggle in the UI plus an env var disables all autonomy instantly |
 | Audit | who/what/why/evidence/rollback-at in `actions` table, visible in the UI with a **Rollback now** button |
@@ -485,7 +545,8 @@ forbidden: [block_all_logins, delete_data, modify_payment_routing, change_limits
 | P4 | 1 business day | 5 business days | daily digest | none |
 
 - **Demo time compression:** `TIME_SCALE=30`, so a 5-minute SLA plays out in 10 seconds.
-- **Context-aware reminders:** the LLM writes them from current telemetry, e.g. *"Still unacknowledged. Pool usage rose from 82% to 91% since the last reminder. Forecast breach in 4 min."*
+- **Agentic follow-up:** the Follow-up agent reasons over the ticket, its SLA and live telemetry together. It can escalate **early** if the forecast is worsening, hold a reminder if the assignee commented 2 minutes ago, or propose closing if metrics recovered. The Policy Guard sets the floor: a breached SLA always escalates.
+- **Context-aware reminders:** the agent writes them from current telemetry, e.g. *"Still unacknowledged. Pool usage rose from 82% to 91% since the last reminder. Forecast breach in 4 min."*
 - **Auto-resolution proposal:** if metrics stay in band for 15 minutes, the Follow-up agent proposes closing with a resolution note, and a human confirms.
 - **User-reported tickets:** classified, embedded, and matched against open incidents. A match shows *"Foresight raised this 12 minutes before the first customer report"*. That feeds the **pre-emptive ratio** KPI.
 
@@ -561,7 +622,7 @@ generate_timeseries.py → features.py → train_model.py → models/*.joblib (G
 | **Security** | Least privilege, no secrets in code | Secret Manager; one service account per Cloud Run service with minimal roles (Pub/Sub publisher/subscriber, BigQuery dataEditor on one dataset, `run.developer` scoped to `finpay-sim` only); webhook HMAC signature check; CORS locked to the web origin |
 | **Privacy / fintech compliance** | No PII or PCI data to the LLM | Redactor before any prompt: PAN (Luhn-checked 13–19 digits), IBAN/account numbers, CNIC/national IDs, emails, phones, IPs hashed; prompts and outputs logged in redacted form; data stays in one region; retention policy on raw logs. Aligned with PCI-DSS and central-bank tech-risk expectations |
 | **Auditability / explainability** | Every decision traceable | `agent_traces` (input, tool calls, output, model, tokens, latency) and `actions` (who, why, evidence, rollback); "Why?" timeline in the UI; evidence IDs on every claim |
-| **Cost** | Under ~$5 for the whole hackathon | LLM only on grouped candidates; a small/fast model tier for Triage, Skeptic and Scribe, a stronger tier for the Investigator; embedding cache; BigQuery partitioned by date and clustered by service |
+| **Cost** | Under ~$5 for the whole hackathon | LLM only on grouped candidates and log-novelty batches; a small/fast model tier for Skeptic, Log Analyst and Follow-up, a stronger tier for the Commander and Investigator; embedding cache; BigQuery partitioned by date and clustered by service |
 | **Scalability** | Stateless path to horizontal scale | Detection is keyed by `service`, so it partitions cleanly. Hot state sits behind an interface (`store/memory.py` now, Firestore or Memorystore later) |
 | **Observability of Foresight itself** | We watch the watcher | Platform ops page: throughput, Pub/Sub backlog (`num_undelivered_messages` via Cloud Monitoring API), agent latency, LLM errors, routing accuracy |
 | **Usability** | A new on-call engineer acts in < 60 s without training | §14 |
@@ -578,7 +639,7 @@ generate_timeseries.py → features.py → train_model.py → models/*.joblib (G
 | Screen | Content |
 |---|---|
 | **Command Center** (home) | KPI strip (pre-empted incidents today, median lead time, false-positive rate, open P1/P2, autonomy status). **"Incidents in the making"** feed with live countdowns ("PaymentGateway pool saturates in ~8 min"). Service health map with dependency edges coloured by risk. Approvals inbox badge |
-| **Incident detail** | Headline + severity + countdown. Business summary / technical summary toggle. Ranked hypotheses with confidence bars and clickable evidence (inline sparkline, log excerpt). Similar past incidents (similarity %, past fix). Runbook checklist. Proposed actions with **Approve / Reject (reason)**. Agent trace timeline ("Why did Foresight think this?"). 👍/👎 |
+| **Incident detail** | Headline + severity + countdown. Business summary / technical summary toggle. Ranked hypotheses with confidence bars and clickable evidence (inline sparkline, log excerpt). Similar past incidents (similarity %, past fix). Runbook checklist. Proposed actions with **Approve / Reject (reason)**. **Agent trace timeline**, which is the core agentic view: goal → plan v1 → tool calls → Skeptic challenge → plan v2 → decisions → Policy Guard verdicts → verification, streamed live as the agents work. 👍/👎 |
 | **Approvals** | Pending HITL actions with expiry timer, impact estimate, approve/reject |
 | **Security** | Auth failure chart, active containments with TTL countdown + **Rollback**, shadow/enforce toggle, kill switch |
 | **Analytics** | Organisation / department switcher; MTTD/MTTA/MTTR, pre-emptive ratio, SLA breaches, escalations, top root causes |
@@ -591,7 +652,7 @@ generate_timeseries.py → features.py → train_model.py → models/*.joblib (G
 🔴 P1 · PaymentGateway · breach predicted in ~9 min
 Cause (78%): AuthService DB pool leak cascading to payments
 Seen before: INC-0007 (84% similar), fixed by recycling the pool
-Impact: ~4,000 customers, est. PKR 1.2M/min at risk
+Impact: ~4,000 customers, est. USD 4,300/min at risk
 Done automatically: ticket PAY-142 opened, on-call paged
 Needs you: [Approve scale-out]  [Open incident]  [Not useful]
 ```
@@ -664,8 +725,8 @@ backend/
     api/                       # ingest, incidents, actions, tickets, analytics, ops, eval, stream, demo, policy
     ingest/                    # normalizer.py, redact.py, connectors/{replay,cloud_monitoring,webhook}.py
     detection/                 # ewma.py, forecast.py, features.py, ml.py, fusion.py, grouping.py
-    agents/                    # orchestrator.py, base.py, triage.py, investigator.py, historian.py,
-                               # skeptic.py, responder.py, security.py, scribe.py, followup.py
+    agents/                    # runtime.py (ReAct loop, memory, watch scheduler), base.py, commander.py,
+                               # investigator.py, historian.py, skeptic.py, log_analyst.py, security.py, followup.py
       tools/                   # metrics.py, logs.py, deps.py, changes.py, rag.py, auth.py, tickets.py
     actions/                   # policy_guard.py (+ tests), executors/{ticket,notify,page,cloudrun_scale,throttle,step_up}.py, audit.py
     rag/                       # embed.py, store.py (bq VECTOR_SEARCH + in-memory fallback)
@@ -691,16 +752,16 @@ Assumes **3 builders**: **A** = data/ML/detection, **B** = agents/actions/LLM, *
 | Time | A — Data / ML / Detection | B — Agents / Actions | C — Frontend / Deploy |
 |---|---|---|---|
 | **0:00–0:20** | **Together:** freeze CES, RCA JSON and ticket schemas (copy from this doc); create GCP project, enable APIs (Run, Pub/Sub, BigQuery, Vertex AI, Secret Manager, Scheduler, Functions, Monitoring); store the OpenAI key in Secret Manager | same | **Deploy hello-world `foresight-api` and `foresight-web` to Cloud Run now** (de-risks deploy early) |
-| **0:20–1:20** | `generate_timeseries.py` + ground truth; load to BigQuery; EWMA + Holt + TTB; fusion + grouping, emitting candidates | LLM provider + redactor; orchestrator; Triage, Investigator, Skeptic, Scribe with tools against **fixture candidates** | UI shell: Command Center + Incident detail against mock JSON; SSE client |
-| **1:20–2:20** | Train IF + GBM, serve in-process; `build_corpus.py` + embeddings + VECTOR_SEARCH; replayer → Pub/Sub | Historian (RAG), Responder, **Policy Guard + tests**, executors (ticket, Chat, page, Cloud Run scale), Security Sentinel + throttle/step-up | `finpay-sim` + chaos endpoints deployed; Approvals + Security pages; wire to real API |
+| **0:20–1:20** | `generate_timeseries.py` + ground truth; load to BigQuery; EWMA + Holt + TTB; fusion + grouping, emitting signals; log-template masker | LLM provider + redactor; **agent runtime** (ReAct loop, working memory, `schedule_recheck`); Commander + Investigator + Skeptic against **fixture signals**, showing a re-plan on a disputed fixture | UI shell: Command Center + Incident detail with the **agent trace timeline** against mock JSON; SSE client |
+| **1:20–2:20** | Train IF + GBM, serve in-process; `build_corpus.py` + embeddings + VECTOR_SEARCH; replayer → Pub/Sub; Cloud Monitoring connector (Pub/Sub backlog + `finpay-sim` metrics) | Historian (RAG), Log Analyst, **Policy Guard + tests**, executors (ticket, Chat, page, Cloud Run scale), Security Sentinel + throttle/step-up + verification | `finpay-sim` + chaos endpoints deployed; webhook Cloud Function; Approvals + Security pages; wire to real API |
 | **2:20–3:00** | `run_eval.py` + scorecard endpoint; tune τ on the **train split only** | Follow-up & Escalation agent + Cloud Scheduler; user-ticket linking | Scorecard, Platform Ops (routing accuracy, throughput, queue depth), Analytics (org/dept) |
 | **3:00–3:15** | **End-to-end on live Cloud Run URLs:** run all 5 chaos scenarios, fix the top 3 bugs | | |
 | **3:15** | 🧊 **Feature freeze** | | |
 | **3:15–3:40** | Final eval run on held-out split; record numbers | Tighten prompts on the 5 scenarios; verify fallbacks (kill the OpenAI key and confirm the demo still works) | README, architecture diagram (export the mermaid), slides, **backup screen recording (labelled as a recording)** |
 | **3:40–4:00** | **Rehearse the demo twice** and submit | | |
 
-**Cut order if behind** (cut from the top): Cloud Monitoring connector → webhook Cloud Function → Analytics page → feedback loop → IsolationForest (keep the GBM) → restart/rollback simulations.
-**Never cut:** forecast/TTB (lead time), Skeptic (FPR), grounded RCA + Historian (summary quality), Scorecard, one autonomous security action, one real HITL action, deployment on GCP.
+**Cut order if behind** (cut from the top): restart/rollback simulations → feedback loop → IsolationForest (keep the GBM) → step-up MFA (keep throttle) → Security and Approvals as separate pages (fold them into Command Center) → Analytics charts down to a KPI table.
+**Never cut:** Commander re-plan + `schedule_recheck` (the agentic proof), forecast/TTB (lead time), Skeptic (FPR), grounded RCA + Historian (summary quality), Log Analyst (LLM-based detection), Scorecard, Platform Ops (routing accuracy, throughput, queue depth), one autonomous security action, one real HITL action, the minimal Cloud Monitoring and Cloud Function connectors (suggested stack), deployment on GCP.
 
 **Development practice:** build in Google Antigravity; keep prompts in `backend/prompts/`; commit at least every 30 minutes with meaningful messages; `.env` stays local and secrets live in Secret Manager.
 
@@ -709,8 +770,8 @@ Assumes **3 builders**: **A** = data/ML/detection, **B** = agents/actions/LLM, *
 ## 20. Demo script (≈ 5 min)
 
 1. **(30 s) Hook:** Scorecard. *"On this dataset, static thresholds give 0 minutes of warning and 44% of their pages are false alarms. Here's Foresight on held-out days."* Point at lead time and FPR, baseline vs Foresight.
-2. **(90 s) Predict and act:** click **Leak DB pool**. Countdown appears, agent trace streams, the P1 ticket lands in Payments with grounded RCA and a similar past incident, and the Chat card arrives. Approve the **scale-out** and the real Cloud Run instance count changes.
-3. **(60 s) Safe autonomy:** click **Credential stuffing**. Security Sentinel throttles and forces step-up MFA **without a human**, verification passes, the TTL counts down, and the Rollback button is visible. Say the line: *"Rules decide, the LLM explains. Nothing it does can lock out a real customer."*
+2. **(90 s) The agents plan, re-plan and act:** click **Upstream cascade**. A countdown appears and the agent trace streams. The Commander sets a goal and plans; the Skeptic **disputes** the obvious cause; the Commander **re-plans**, finds the AuthService pool leak, and routes the P1 to Identity & Security with grounded RCA and a similar past incident. The Chat card arrives. Approve the **scale-out** and the real Cloud Run instance count changes. The Commander then **verifies** the effect and closes its goal.
+3. **(60 s) Safe autonomy:** click **Credential stuffing**. The Security Sentinel decides it is an attack and throttles plus forces step-up MFA **without a human**. It then verifies the outcome, the TTL counts down, and the Rollback button is visible. Say the line: *"The agent decides; the guard holds a veto. A wrong guess means we don't act, never that we act wrongly. Nothing it does can lock out a real customer."*
 4. **(30 s) Noise killed:** click **Nightly report batch**. The Skeptic dismisses it with reasons, and the "false positives avoided" counter goes up.
 5. **(30 s) Never forgotten:** the unacknowledged ticket triggers a reminder, then an escalation to the secondary (time-compressed). A user-reported ticket is auto-linked: *"Foresight raised this 12 min before the customer did."*
 6. **(30 s) Org view:** Analytics (department switch) and Platform Ops (routing accuracy, throughput, queue depth).
@@ -758,13 +819,16 @@ Assumes **3 builders**: **A** = data/ML/detection, **B** = agents/actions/LLM, *
 | Requirement | Where it's met | Demo moment |
 |---|---|---|
 | Real-time ingestion of metrics, logs, event streams | §5, F1, Pub/Sub + simulator + replay + webhook | Ops page throughput, live feed |
-| Statistical + LLM-based detection | §6 (L1–L3), Skeptic + Investigator §7 | Agent trace on incident detail |
+| Statistical + LLM-based detection | §6 L1–L3 (statistical/ML) + L4 Log Analyst (LLM), Skeptic + Investigator §7 | Agent trace on incident detail |
 | Autonomous actions (alerting, tickets, runbooks) | §8, §9 | Ticket + Chat card + runbook |
-| NL incident summaries | Scribe, §7.3, §14.2 | Business/technical toggle |
+| NL incident summaries | Commander `write_ticket` tool, §7.5, §14.2 | Business/technical toggle |
 | Historical pattern correlation | Historian + RAG §10 | "84% like INC-0007" |
 | Dashboard: routing accuracy, throughput, queue depth | Platform Ops §14.1, §9.1 | Ops page |
 | Lead time / FPR / RCA quality | §6.4, §15, Scorecard | Opening + closing slide |
-| Agentic AI (plan, tools, actions) | §7 (planner, tool-using agents, policy-gated actions) | Trace timeline |
+| Agentic AI (plan, tools, actions) | §7.1 five properties: goal-driven Commander, plan/re-plan, tool-calling specialists, agent-chosen actions, closed-loop verification + self-scheduled re-checks | Plan v1 → v2 in the trace; watch → act; verification step |
+| Preventive action "scaling infrastructure" | §8.1 agent-prepared HITL scale on real Cloud Run | Approve scale-out |
+| Suggested stack (Vertex AI, BigQuery, Cloud Monitoring API, Pub/Sub, Cloud Functions) | Embeddings + Gemini judge/fallback, system of record + VECTOR_SEARCH, backlog + sim metrics, event bus, webhook connector | Architecture slide + Ops page |
+| Developed in Google Antigravity | §19 development practice | Mention + commit history |
 | Deployed on GCP | §5.2 | Live URL |
 | Scalability | §21 | Closing |
 | Working live demo | §12.2, §20 | Chaos buttons |
@@ -776,7 +840,7 @@ Assumes **3 builders**: **A** = data/ML/detection, **B** = agents/actions/LLM, *
 
 1. Team size and who owns which lane (adjust §19).
 2. LLM split: keep GPT primary (key in hand) with Vertex Gemini as fallback/judge, or go Gemini-first to lean harder into the "GCP stack" score?
-3. Currency/region for the impact model (PKR used as placeholder; change if needed) and GCP region (`us-central1` has the widest Vertex AI model availability).
+3. Currency for the impact model (`IMPACT_CURRENCY`, default USD) and GCP region (`us-central1` has the widest Vertex AI model availability).
 4. Chat target: Google Chat webhook (GCP-native) or Slack?
 5. Use Google ADK from the start, or the custom orchestrator (recommended for 4 hours)?
 6. Product name: "Foresight" is a placeholder.
