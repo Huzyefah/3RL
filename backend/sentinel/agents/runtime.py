@@ -80,7 +80,7 @@ class Run:
 
     async def tool(self, agent: str, name: str, fn, *a, summary: Callable[[dict], str]) -> dict:
         r = fn(self.ctx, *a)
-        await self.trace_step(agent, "tool_call", summary(r), tool=f"{name}()", evidence_id=r["evidence_id"])
+        await self.trace_step(agent, "tool_call", summary(r), tool=name, evidence_id=r["evidence_id"])
         return r
 
 
@@ -356,7 +356,7 @@ async def run_incident(
             "guard",
             "guard",
             f"{a['type']} → {mode}: {reason}",
-            tool="request_action()",
+            tool="request_action",
             args={"verdict": mode},
         )
     rca["actions"] = [
