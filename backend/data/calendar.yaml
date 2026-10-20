@@ -1,0 +1,38 @@
+# Business calendar (FP 3.4 N1-N3, D8). Local times are Asia/Karachi wall clock, matching the CSV.
+# Entries flagged authored_to_explain_anchor were authored to explain demo anchors (D8) and
+# must be disclosed in the data card. 2026-08-14T03:18 is NOT covered by any entry (N6 candidate).
+events:
+  - id: salary_days
+    kind: salary_day
+    description: Salary days, 1st to 3rd of every month
+    days_of_month: [1, 2, 3]
+    tps_multiplier: 1.6
+  - id: eod_settlement
+    kind: eod_settlement
+    description: End-of-day settlement batch, cut-off 16:00 PKT
+    cron: "0 16 * * *"
+    tz: Asia/Karachi
+    duration_min: 60
+    benign_for: [disk_io, queue_depth]
+  - id: bank_maintenance_a
+    kind: maintenance
+    description: Scheduled BANK_A switch maintenance, every Sunday
+    service: PaymentGateway
+    segment: BANK_A
+    weekday: 6
+    start: "01:00"
+    end: "02:00"
+  - id: azadi_sale_0814
+    kind: campaign
+    description: Azadi (Independence Day) sale
+    start: "2026-08-14T17:00"
+    end: "2026-08-14T23:00"
+    tps_multiplier: 1.5
+    authored_to_explain_anchor: true
+  - id: cashback_weekend_0822
+    kind: campaign
+    description: Weekend cashback campaign
+    start: "2026-08-22T19:00"
+    end: "2026-08-22T23:00"
+    tps_multiplier: 1.5
+    authored_to_explain_anchor: true

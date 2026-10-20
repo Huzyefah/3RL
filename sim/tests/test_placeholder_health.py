@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+
 from finpay_sim.app import app
 
 pytestmark = pytest.mark.unit

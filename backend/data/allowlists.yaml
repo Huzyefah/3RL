@@ -1,0 +1,10 @@
+# Sources the throttle action must never block (fictional ranges, RFC 5737 / RFC 1918).
+corporate:
+  cidrs: [10.20.0.0/16, 192.0.2.0/24]
+  accounts: [svc-health-probe, svc-synthetic-login]
+partner_banks:
+  cidrs: [198.51.100.0/24, 203.0.113.0/25]
+  accounts: []
+processors:
+  cidrs: [203.0.113.128/25, 172.16.50.0/24]
+  accounts: []

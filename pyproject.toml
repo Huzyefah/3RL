@@ -23,6 +23,7 @@ dev = [
   "pyright",
   "httpx",
   "pandas",
+  "matplotlib>=3.11.2",
 ]
 
 [tool.pytest.ini_options]
@@ -42,6 +43,9 @@ markers = [
 line-length = 100
 target-version = "py312"
 extend-exclude = ["frontend", "e2e", "scripts", "infra"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["sentinel", "finpay_sim"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
