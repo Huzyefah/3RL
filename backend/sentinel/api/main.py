@@ -30,7 +30,7 @@ from sentinel.schemas import band
 from sentinel.topology import Topology
 
 # Demo loop: the 08-01 cascade (re-plan), an N1 surge (noise killed) and a BANK_C RC-BANK episode (act).
-DEMO_EPISODES = ["INC-PS02-0001", "NEG-PS02-0001", "INC-PS02-0020"]
+DEMO_EPISODES = ["INC-PS02-0001", "NEG-PS02-0017", "INC-PS02-0020"]
 TAU = 0.45
 
 

@@ -26,7 +26,7 @@ const NEG_LABEL: Record<string, string> = {
   N6: "unexplained (no evidence)",
 };
 // Episodes that tell the story best, in pitch order.
-const FEATURED = ["INC-PS02-0001", "NEG-PS02-0001", "INC-PS02-0020"];
+const FEATURED = ["INC-PS02-0001", "NEG-PS02-0017", "INC-PS02-0020", "NEG-PS02-0010"];
 
 async function call(path: string, init?: RequestInit) {
   const res = await fetch(`/api${path}`, { cache: "no-store", ...init });
