@@ -11,3 +11,14 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# Node / Next / Playwright
+node_modules/
+.next/
+e2e/.results/
+e2e/playwright-report/
+**/.results/
+
+# Evidence videos are uploaded to GCS, not committed
+docs/test-evidence/**/*.webm
+docs/test-evidence/**/*.mp4

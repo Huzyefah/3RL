@@ -44,7 +44,7 @@ if [ -z "$key" ] && [ -f "$ROOT/.env" ]; then key="$(grep -E '^OPENAI_API_KEY=' 
 if [ -z "$key" ]; then
   bad "OPENAI_API_KEY not set (env or .env)"
 else
-  code=$(curl -s -o /dev/null -w '%{http_code}' https://api.openai.com/v1/models -H "Authorization: Bearer $key")
+  code=$(curl -s --retry 2 --max-time 20 -o /dev/null -w '%{http_code}' https://api.openai.com/v1/models -H "Authorization: Bearer $key")
   [ "$code" = "200" ] && ok "OpenAI key valid (GET /v1/models → 200)" || bad "OpenAI key check → HTTP $code"
 fi
 

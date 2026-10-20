@@ -1,0 +1,9 @@
+# Build api from the REPO ROOT so shared files (e.g. data/) are in context: gcloud builds submit --config infra/cloudbuild/api.yaml .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "backend/Dockerfile", "-t", "${_IMAGE}", "."]
+images: ["${_IMAGE}"]
+substitutions:
+  _IMAGE: us-central1-docker.pkg.dev/mda-atomcamp/sentinel/api:latest
+options:
+  logging: CLOUD_LOGGING_ONLY

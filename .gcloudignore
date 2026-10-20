@@ -1,0 +1,12 @@
+# Cloud Build uploads the repo root; keep the context small. (Does NOT exclude data/.)
+.git
+.env
+.env.*
+**/node_modules
+**/.next
+**/.venv
+**/__pycache__
+**/.results
+e2e/
+docs/
+analysis/
