@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run *)",
+      "Bash(uv sync *)",
+      "Bash(make test*)",
+      "Bash(make e2e*)",
+      "Bash(make dev*)",
+      "Bash(make lint)",
+      "Bash(make preflight)",
+      "Bash(npm run lint*)",
+      "Bash(npm run build*)",
+      "Bash(npm run dev*)",
+      "Bash(npx playwright test*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git branch*)",
+      "Bash(gcloud * describe *)",
+      "Bash(gcloud * list *)",
+      "Bash(gcloud config get-value *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r \".tool_response.filePath // .tool_input.file_path\"); case \"$f\" in */backend/*.py) d=\"${f%%/backend/*}/backend\";; */sim/*.py) d=\"${f%%/sim/*}/sim\";; *) exit 0;; esac; cd \"$d\" && uv run --quiet ruff format --quiet \"$f\" 2>/dev/null || true",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

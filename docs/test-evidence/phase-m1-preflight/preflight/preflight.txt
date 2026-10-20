@@ -1,4 +1,4 @@
-Sentinel preflight — project=mda-atomcamp region=us-central1 — 2026-10-20T08:07:27Z
+Sentinel preflight — project=mda-atomcamp region=us-central1 — 2026-10-20T08:17:00Z
 1. Toolchain
   [ OK ] gcloud: /opt/homebrew/bin/gcloud
   [ OK ] uv: /opt/homebrew/bin/uv
@@ -14,8 +14,8 @@ Sentinel preflight — project=mda-atomcamp region=us-central1 — 2026-10-20T08
 4. Data
   [ OK ] PS-02 CSV rows: 500
 5. OpenAI key
-  [FAIL] OPENAI_API_KEY not set (env or .env)
+  [ OK ] OpenAI key valid (GET /v1/models → 200)
 6. Google Chat webhook (optional)
   [WARN] CHAT_WEBHOOK_URL absent → UI 'Chat card' panel fallback
 
-PREFLIGHT: FAIL
+PREFLIGHT: PASS
