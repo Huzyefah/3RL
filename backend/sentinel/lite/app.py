@@ -81,7 +81,9 @@ class Holt:
 
 
 def _trace(inc: dict, step: str, detail: str) -> None:
-    inc["trace"].append({"t": S["time"].isoformat(timespec="seconds"), "step": step, "detail": detail})
+    inc["trace"].append(
+        {"t": S["time"].isoformat(timespec="seconds"), "step": step, "detail": detail}
+    )
 
 
 # ------------------------------------------------------------------ LLM
@@ -107,7 +109,10 @@ async def _llm_parse(model: str, system: str, user: dict, fmt):
     r = await asyncio.wait_for(
         c.chat.completions.parse(
             model=model,
-            messages=[{"role": "system", "content": system}, {"role": "user", "content": json.dumps(user, default=str)}],
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": json.dumps(user, default=str)},
+            ],
             response_format=fmt,
         ),
         30,
@@ -158,7 +163,11 @@ def _runbook(code: str) -> list[str]:
         from pathlib import Path
 
         p = Path(__file__).resolve().parents[2] / "data" / "runbooks" / f"{code}.md"
-        return [ln.strip("-* ").strip() for ln in p.read_text().splitlines() if ln.strip().startswith(("-", "*", "1", "2", "3"))][:5]
+        return [
+            ln.strip("-* ").strip()
+            for ln in p.read_text().splitlines()
+            if ln.strip().startswith(("-", "*", "1", "2", "3"))
+        ][:5]
     except Exception:
         return ["Page the owning team", "Check recent deploys", "Scale or fail over per runbook"]
 
@@ -172,10 +181,22 @@ async def _analyse(inc: dict, replan: bool = False) -> None:
         "similar_past": _similar(inc), "runbook": inc["runbook"], "time": S["time"].isoformat(),
     }  # fmt: skip
     if not replan:
-        _trace(inc, "goal", f"Prevent {inc['service']} breach (ETA {inc['eta'] and round(inc['eta'])} min)")
-        _trace(inc, "plan v1", "investigate metrics -> challenge with Skeptic -> write RCA -> request action")
+        _trace(
+            inc,
+            "goal",
+            f"Prevent {inc['service']} breach (ETA {inc['eta'] and round(inc['eta'])} min)",
+        )
+        _trace(
+            inc,
+            "plan v1",
+            "investigate metrics -> challenge with Skeptic -> write RCA -> request action",
+        )
         _trace(inc, "tool: get_calendar", f"events now: {cal or 'none'}")
-        _trace(inc, "tool: recall_similar", json.dumps([s['id'] + f" {s['similarity']}" for s in ctx['similar_past']]))
+        _trace(
+            inc,
+            "tool: recall_similar",
+            json.dumps([s["id"] + f" {s['similarity']}" for s in ctx["similar_past"]]),
+        )
         try:
             sk = await _llm_parse(
                 st.openai_fast_model,
@@ -188,7 +209,16 @@ async def _analyse(inc: dict, replan: bool = False) -> None:
             S["llm"] = "openai"
         except Exception as e:  # I7 fallback
             S["llm"] = "fallback"
-            verdict, conf, why, cited = ("BENIGN" if cal and inc["service"] and "FA" in inc.get("truth", "") else "CONFIRMED"), 0.6, f"fallback ({type(e).__name__})", cal
+            verdict, conf, why, cited = (
+                (
+                    "BENIGN"
+                    if cal and inc["service"] and "FA" in inc.get("truth", "")
+                    else "CONFIRMED"
+                ),
+                0.6,
+                f"fallback ({type(e).__name__})",
+                cal,
+            )
         # I2/I3 enforcement in code
         if verdict == "BENIGN" and not (cited and cal):
             verdict, why = "CONFIRMED", why + " [I2: benign without calendar evidence overruled]"
@@ -200,7 +230,9 @@ async def _analyse(inc: dict, replan: bool = False) -> None:
             inc["status"] = "suppressed"
             S["kpi"]["fp"] += 1
             inc["rca"] = _fallback_rca(inc, verdict, conf)
-            inc["rca"]["headline"] = f"Suppressed: {inc['service']} surge explained by {', '.join(cited or cal)}"
+            inc["rca"]["headline"] = (
+                f"Suppressed: {inc['service']} surge explained by {', '.join(cited or cal)}"
+            )
             _trace(inc, "suppressed", "false alarm argued down; stored in memory")
             return
         if verdict == "DISPUTED":
@@ -209,7 +241,11 @@ async def _analyse(inc: dict, replan: bool = False) -> None:
     else:
         inc["plan"] = 2
         _trace(inc, "new evidence", f"symptom on {inc['attached'][-1]} linked to {inc['root']}")
-        _trace(inc, "plan v2", f"re-plan: root cause is upstream {inc['root']}; route to {TOPO.owner(inc['root'])}")
+        _trace(
+            inc,
+            "plan v2",
+            f"re-plan: root cause is upstream {inc['root']}; route to {TOPO.owner(inc['root'])}",
+        )
     try:
         rca = await _llm_parse(
             st.openai_fast_model,
@@ -233,17 +269,47 @@ async def _analyse(inc: dict, replan: bool = False) -> None:
     inc["status"] = "open"
     _trace(inc, "rca written", d["headline"])
     _trace(inc, "policy: create_ticket AUTO", "ticket created")
-    inc["ticket"] = {"id": f"TCK-{inc['id']}", "team": TOPO.owner(inc["root"]), "severity": d["severity"], "title": d["headline"], "runbook": d["runbook_steps"] or inc["runbook"]}
+    inc["ticket"] = {
+        "id": f"TCK-{inc['id']}",
+        "team": TOPO.owner(inc["root"]),
+        "severity": d["severity"],
+        "title": d["headline"],
+        "runbook": d["runbook_steps"] or inc["runbook"],
+    }
     _trace(inc, "policy: notify_channel AUTO", "Google Chat card recorded")
-    inc["chat_card"] = {"cardsV2": [{"card": {"header": {"title": d["headline"]}, "sections": [{"widgets": [{"textParagraph": {"text": d["summary_technical"]}}]}]}}]}
+    inc["chat_card"] = {
+        "cardsV2": [
+            {
+                "card": {
+                    "header": {"title": d["headline"]},
+                    "sections": [
+                        {"widgets": [{"textParagraph": {"text": d["summary_technical"]}}]}
+                    ],
+                }
+            }
+        ]
+    }
     if inc["code"] == "RC-BANK" and inc["segment"].startswith("bank="):
         bank = inc["segment"].split("=")[1]
         aid = f"APR-{inc['id']}"
-        S["approvals"][aid] = {"id": aid, "action": "reroute_bank", "params": {"bank": bank, "rail": "RAAST"}, "incident_id": inc["id"], "created": time.time(), "state": "pending"}
-        _trace(inc, "policy: reroute_bank HITL", f"approval requested: reroute {bank} IBFT -> RAAST (target healthy, expires 10 min)")
+        S["approvals"][aid] = {
+            "id": aid,
+            "action": "reroute_bank",
+            "params": {"bank": bank, "rail": "RAAST"},
+            "incident_id": inc["id"],
+            "created": time.time(),
+            "state": "pending",
+        }
+        _trace(
+            inc,
+            "policy: reroute_bank HITL",
+            f"approval requested: reroute {bank} IBFT -> RAAST (target healthy, expires 10 min)",
+        )
 
 
-def _new_incident(service: str, metric: str, segment: str, code: str, u: float, eta: float | None, truth: str = "") -> dict:
+def _new_incident(
+    service: str, metric: str, segment: str, code: str, u: float, eta: float | None, truth: str = ""
+) -> dict:
     n = len(S["incidents"]) + 1
     iid = f"INC-{S['time']:%Y-%m%d}-{n:03d}"
     inc = {
@@ -256,13 +322,21 @@ def _new_incident(service: str, metric: str, segment: str, code: str, u: float, 
     return inc
 
 
-def _candidate(service: str, u: float, eta: float | None, code: str, truth: str, metric: str = "pool/latency") -> None:
+def _candidate(
+    service: str, u: float, eta: float | None, code: str, truth: str, metric: str = "pool/latency"
+) -> None:
     for inc in S["incidents"].values():
-        if inc["status"] in ("analysing", "open", "watching") and (inc["service"] == service or TOPO.linked(inc["service"], service)):
+        if inc["status"] in ("analysing", "open", "watching") and (
+            inc["service"] == service or TOPO.linked(inc["service"], service)
+        ):
             if service not in inc["attached"] and service != inc["service"]:
                 inc["attached"].append(service)
                 # upstream is the root cause: the service that others depend on
-                if service in TOPO.upstream(inc["root"]) or service in TOPO.blast_radius(service) and inc["root"] in TOPO.blast_radius(service):
+                if (
+                    service in TOPO.upstream(inc["root"])
+                    or service in TOPO.blast_radius(service)
+                    and inc["root"] in TOPO.blast_radius(service)
+                ):
                     pass
                 asyncio.create_task(_analyse(inc, replan=True))
             return
@@ -303,7 +377,14 @@ async def _replay(eid: str) -> None:
             pred = hol[s].rise >= 5 and e is not None and e <= 30
             if (pred or u >= 0.95) and s not in fired:
                 fired.add(s)
-                _candidate(s, u, e, a.code if a.kind == "incident" else "RC-BENIGN" if False else a.code, eid, a.metric)
+                _candidate(
+                    s,
+                    u,
+                    e,
+                    a.code if a.kind == "incident" else "RC-BENIGN" if False else a.code,
+                    eid,
+                    a.metric,
+                )
                 inc = next(reversed(S["incidents"].values()))
                 inc["onset_ts"] = gt.onset
         await asyncio.sleep(0.12)
@@ -326,17 +407,36 @@ async def _bank_loop() -> None:
         u = (1 - S["bank_sr"]["BANK_C"]) / 0.03
         h = S["holt"].setdefault("BANK_C", Holt())
         e = h.update(u)
-        if S["bank_fault"] and not any(i["segment"] == "bank=BANK_C" and i["status"] in ("analysing", "open") for i in S["incidents"].values()):
+        if S["bank_fault"] and not any(
+            i["segment"] == "bank=BANK_C" and i["status"] in ("analysing", "open")
+            for i in S["incidents"].values()
+        ):
             if (h.rise >= 3 and e is not None and e <= 30) or u >= 0.95:
                 S["time"] = datetime.now().replace(microsecond=0)
-                inc = _new_incident("PaymentGateway", "issuer_timeout_rate", "bank=BANK_C", "RC-BANK", min(u, 1.2), (e or 11), "chaos")
+                inc = _new_incident(
+                    "PaymentGateway",
+                    "issuer_timeout_rate",
+                    "bank=BANK_C",
+                    "RC-BANK",
+                    min(u, 1.2),
+                    (e or 11),
+                    "chaos",
+                )
                 inc["eta"] = e or 11.0
         # verification after reroute
         for a in S["approvals"].values():
-            if a["state"] == "executed" and not a.get("verified") and S["bank_sr"][a["params"]["bank"]] >= 0.97:
+            if (
+                a["state"] == "executed"
+                and not a.get("verified")
+                and S["bank_sr"][a["params"]["bank"]] >= 0.97
+            ):
                 a["verified"] = True
                 inc = S["incidents"][a["incident_id"]]
-                _trace(inc, "verification", f"{a['params']['bank']} success rate recovered to {S['bank_sr'][a['params']['bank']]:.3f}; ETA cleared; goal met")
+                _trace(
+                    inc,
+                    "verification",
+                    f"{a['params']['bank']} success rate recovered to {S['bank_sr'][a['params']['bank']]:.3f}; ETA cleared; goal met",
+                )
                 inc["status"] = "resolved"
                 S["kpi"]["pre"] += 1
                 S["kpi"]["leads"].append(11.0)
@@ -498,11 +598,21 @@ def _scorecard() -> dict:
         rows.append({"config": r.system + ("" if r.split == "all" else f" ({r.split})"), "recall": r.recall, "precision": r.precision, "fp_per_service_day": None,
                      "median_lead_min": None, "pct_lead_gt0": None, "note": r.notes})  # fmt: skip
     raw = [x for x in rows]
-    for name, cal in (("S1 Holt time-to-breach (test split Aug 21-30)", False), ("S2 = S1 + calendar-context rule (test split)", True)):
+    for name, cal in (
+        ("S1 Holt time-to-breach (test split Aug 21-30)", False),
+        ("S2 = S1 + calendar-context rule (test split)", True),
+    ):
         alerts, inc = _sim_alerts(cal)
         det, leads, tp_alerts = 0, [], set()
         for e in inc:
-            hits = [a for a in alerts if (a[1] == e.service or TOPO.linked(a[1], e.service)) and e.precursor_start - timedelta(minutes=30) <= a[0] <= e.onset + timedelta(minutes=5)]
+            hits = [
+                a
+                for a in alerts
+                if (a[1] == e.service or TOPO.linked(a[1], e.service))
+                and e.precursor_start - timedelta(minutes=30)
+                <= a[0]
+                <= e.onset + timedelta(minutes=5)
+            ]
             if hits:
                 det += 1
                 f = min(h[0] for h in hits)

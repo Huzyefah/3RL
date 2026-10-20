@@ -50,8 +50,17 @@ def incident(iid: str) -> dict:
     if inc is None:
         raise HTTPException(404, "unknown incident")
     rca = dict(inc["rca"] or {"incident_id": iid, "headline": inc["headline"]})
-    rca.update({"status": inc["status"], "verdict": inc["verdict"], "trace": inc["trace"], "actions": inc["actions"],
-                "ticket": inc["ticket"], "chat_card": inc["chat_card"], "members": inc["members"]})
+    rca.update(
+        {
+            "status": inc["status"],
+            "verdict": inc["verdict"],
+            "trace": inc["trace"],
+            "actions": inc["actions"],
+            "ticket": inc["ticket"],
+            "chat_card": inc["chat_card"],
+            "members": inc["members"],
+        }
+    )
     return rca
 
 
