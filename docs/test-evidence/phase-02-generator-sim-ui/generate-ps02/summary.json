@@ -1,0 +1,28 @@
+{
+  "minutes": 43260,
+  "series": 69,
+  "episodes": {
+    "incidents": 28,
+    "negatives": 22
+  },
+  "codes": {
+    "N1": 6,
+    "N3": 5,
+    "N5": 6,
+    "N6": 5,
+    "RC-BANK": 3,
+    "RC-DBPOOL": 9,
+    "RC-MEMLEAK": 6,
+    "RC-OTP-PROVIDER": 2,
+    "RC-QUEUE": 8
+  },
+  "abrupt": 6,
+  "b1_alert_runs": 50,
+  "b0_alerts": 0,
+  "events": {
+    "cron": 65,
+    "change": 34,
+    "calendar": 19
+  },
+  "log_rows": 2366
+}

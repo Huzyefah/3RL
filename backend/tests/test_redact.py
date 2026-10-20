@@ -22,3 +22,8 @@ def test_assert_no_pii_helper():
     with pytest.raises(PIIError):
         assert_no_pii("id 61101-7654321-9")
     assert_no_pii({"ok": "masked 03xx-xxxx567, latency 1234567 ms"})
+
+
+def test_floats_are_not_card_numbers():
+    assert_no_pii({"value": 0.9715381759683208, "u": 1.4111111111111111})
+    assert_no_pii("u=0.4111111111111111 and 12.5500005555555559")

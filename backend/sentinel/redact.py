@@ -8,7 +8,8 @@ from typing import Any
 
 MSISDN = re.compile(r"(?<!\d)03\d{9}(?!\d)")
 CNIC = re.compile(r"(?<!\d)\d{5}-\d{7}-\d(?!\d)")
-CARD_CANDIDATE = re.compile(r"(?<!\d)\d{13,19}(?!\d)")
+# Not preceded by "." or a digit: float fractions (0.9715381759683208) are not card numbers.
+CARD_CANDIDATE = re.compile(r"(?<![\d.])\d{13,19}(?![\d.])")
 
 
 class PIIError(AssertionError):
