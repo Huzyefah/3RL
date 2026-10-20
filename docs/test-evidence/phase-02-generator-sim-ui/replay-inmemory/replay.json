@@ -1,0 +1,98 @@
+{
+  "INC-PS02-0001": {
+    "window": [
+      "2026-08-01T09:31:00",
+      "2026-08-01T11:15:00"
+    ],
+    "ticks_minutes": 104,
+    "envelopes": 832,
+    "ces_events": 7176,
+    "seconds": 0.095,
+    "pii_check": "pass",
+    "first_envelope_sample": {
+      "service": "PaymentGateway",
+      "ts": "2026-08-01T09:31:00+05:00",
+      "events[0]": {
+        "event_id": "ps02-7-571-PaymentGateway-cpu_usage-*",
+        "ts": "2026-08-01T09:31:00+05:00",
+        "source": "ps02_replay",
+        "kind": "metric",
+        "service": "PaymentGateway",
+        "segment_key": "*",
+        "metric": "cpu_usage",
+        "value": 36.32727877118684,
+        "threshold": 63.07,
+        "direction": "higher_bad",
+        "n_total": null,
+        "n_bad": null,
+        "attributes": {},
+        "redacted": true,
+        "seed": 7
+      }
+    }
+  },
+  "INC-PS02-0020": {
+    "window": [
+      "2026-08-22T19:04:00",
+      "2026-08-22T20:21:00"
+    ],
+    "ticks_minutes": 77,
+    "envelopes": 616,
+    "ces_events": 5313,
+    "seconds": 0.073,
+    "pii_check": "pass",
+    "first_envelope_sample": {
+      "service": "PaymentGateway",
+      "ts": "2026-08-22T19:04:00+05:00",
+      "events[0]": {
+        "event_id": "ps02-7-31384-PaymentGateway-cpu_usage-*",
+        "ts": "2026-08-22T19:04:00+05:00",
+        "source": "ps02_replay",
+        "kind": "metric",
+        "service": "PaymentGateway",
+        "segment_key": "*",
+        "metric": "cpu_usage",
+        "value": 35.78038944944375,
+        "threshold": 63.07,
+        "direction": "higher_bad",
+        "n_total": null,
+        "n_bad": null,
+        "attributes": {},
+        "redacted": true,
+        "seed": 7
+      }
+    }
+  },
+  "NEG-PS02-0009": {
+    "window": [
+      "2026-08-14T02:19:00",
+      "2026-08-14T03:38:00"
+    ],
+    "ticks_minutes": 79,
+    "envelopes": 632,
+    "ces_events": 5451,
+    "seconds": 0.073,
+    "pii_check": "pass",
+    "first_envelope_sample": {
+      "service": "PaymentGateway",
+      "ts": "2026-08-14T02:19:00+05:00",
+      "events[0]": {
+        "event_id": "ps02-7-18859-PaymentGateway-cpu_usage-*",
+        "ts": "2026-08-14T02:19:00+05:00",
+        "source": "ps02_replay",
+        "kind": "metric",
+        "service": "PaymentGateway",
+        "segment_key": "*",
+        "metric": "cpu_usage",
+        "value": 28.148362750317684,
+        "threshold": 63.07,
+        "direction": "higher_bad",
+        "n_total": null,
+        "n_bad": null,
+        "attributes": {},
+        "redacted": true,
+        "seed": 7
+      }
+    }
+  }
+}

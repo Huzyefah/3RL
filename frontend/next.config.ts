@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname),
   cacheComponents: true,
+  devIndicators: false,
   partialPrefetching: true,
   turbopack: {
     root: path.join(__dirname),

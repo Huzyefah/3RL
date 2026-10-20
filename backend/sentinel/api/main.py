@@ -2,7 +2,6 @@ from fastapi import FastAPI
 
 from sentinel.config import settings
 
-
 app = FastAPI(
     title="sentinel-api",
     docs_url="/docs" if settings.env != "prod" else None,

@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "test": "playwright test --grep-invert @live",
-    "test:live": "playwright test --grep @live"
+    "test:live": "playwright test --grep @live",
+    "test:mock": "MOCK=1 playwright test tests/phase-02"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1"

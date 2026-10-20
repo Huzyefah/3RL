@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Suspense } from "react";
 import { apiFetch } from "@/lib/upstream";
 
@@ -18,17 +19,10 @@ async function ApiStatus() {
     </p>
   );
 }
+=======
+import { LiveOps } from "@/components/LiveOps";
+>>>>>>> phase-02-generator-sim-ui
 
 export default function Home() {
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">Sentinel · NovaPay</h1>
-      <p className="text-zinc-600 dark:text-zinc-400">
-        Agentic AIOps for PS-02. Predicts payment incidents, argues false alarms down, acts under policy.
-      </p>
-      <Suspense fallback={<p>Checking API…</p>}>
-        <ApiStatus />
-      </Suspense>
-    </main>
-  );
+  return <LiveOps />;
 }

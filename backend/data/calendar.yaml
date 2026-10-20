@@ -1,0 +1,13 @@
+# Business calendar (all times PKT, UTC+5). Benign evidence for the Skeptic; multipliers for the generator.
+timezone: Asia/Karachi
+daily_tps_profile:   # hour → relative load
+  {0: 0.55, 1: 0.4, 2: 0.25, 3: 0.2, 4: 0.2, 5: 0.25, 6: 0.4, 7: 0.6, 8: 0.8, 9: 0.95, 10: 1.0, 11: 1.05,
+   12: 1.2, 13: 1.25, 14: 1.15, 15: 1.0, 16: 0.95, 17: 0.95, 18: 1.0, 19: 1.1, 20: 1.25, 21: 1.3, 22: 1.25, 23: 0.9}
+events:
+  - {kind: salary_day, days_of_month: [1, 2, 3], tps_multiplier: 1.6, note: "Salary credit surge (N1)"}
+  - {kind: sale, date: "2026-08-14", tps_multiplier: 2.2, note: "Independence Day sale (N1)"}
+  - {kind: bank_maintenance, bank: BANK_D, weekday: sunday, start: "01:00", end: "02:00", note: "Scheduled BANK_D switch maintenance (N2)"}
+schedules:
+  - {kind: cron, service: DataPipeline, name: eod_settlement_batch, start: "23:00", minutes: 45, note: "EOD settlement batch (N3)"}
+  - {kind: cron, service: ReportGenerator, name: regulatory_report_batch, start: "02:00", minutes: 40, note: "SBP regulatory report batch (N3)"}
+settlement_cutoff: "16:00"

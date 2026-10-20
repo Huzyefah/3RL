@@ -1,0 +1,37 @@
+# Autonomy policy as config (FINAL_PLAN §8). policy_guard.py must have a test for every rule.
+security_autonomy: shadow          # off | shadow | enforce
+kill_switch: false
+auto:
+  create_ticket: {}
+  post_chat: {severities: [P1, P2, P3]}
+  page_oncall: {severities: [P1, P2], max_per_team_per_hour: 6}
+  attach_rca: {}
+  schedule_recheck: {max_per_incident: 2, interval_min: 3}
+auto_security:
+  throttle_source:
+    preconditions: {auth_failure_z_min: 4, min_distinct_accounts_per_source_5m: 20, max_sources: 50, max_login_traffic_share: 0.02}
+    ttl_min: 15
+    respect_allowlist: true
+  step_up_mfa:
+    preconditions: {min_failures_10m: 5, min_sources: 3, skip_if_otp_degraded: true}
+    ttl_min: 30
+hitl:
+  reroute_bank: {require_healthy_target: true, healthy_u_max: 0.75, healthy_window_min: 5, approval_ttl_min: 10, revertible: true}
+  otp_failover: {require_healthy_target: true, healthy_u_max: 0.75, healthy_window_min: 5, approval_ttl_min: 10, revertible: true}
+  scale_service: {max_instances: 5, root_cause_required: capacity, approval_ttl_min: 10}
+  rollback: {require_change_within_min: 30, approval_ttl_min: 10, simulated: true}
+  restart: {approval_ttl_min: 10, simulated: true}
+  close_ticket: {min_minutes_in_band: 15}
+forbidden:
+  - modify_ledger_balance
+  - delete_data
+  - block_all_logins
+  - change_transaction_limits
+  - failover_to_unhealthy_target
+  - act_on_non_sandbox_target
+envelope:
+  verify_after_s: 60
+  verify_min_failure_drop: 0.5
+  verify_max_legit_success_drop: 0.01
+  circuit_breaker_max_per_hour: 5
+sandbox_targets: [finpay-sim]
