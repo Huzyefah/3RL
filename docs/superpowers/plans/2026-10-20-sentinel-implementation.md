@@ -103,33 +103,36 @@ All detector parameters are defined **per minute** and converted with `per_tick(
 
 ## Skills: where each is used
 
-**Time is the constraint, so the skill list is cut to the few that earn their cost.** Everything else in the skill catalogue is unused.
+**Skills are chosen by the user (2026-10-20) and must be used as listed.** Sub-agent building stays the priority: the lead orchestrates, and implementer sub-agents (one per task, in parallel where independent) do the work, each told which skills to invoke.
 
-**Build model: sub-agents first.** The main session orchestrates and does not write feature code itself. For every phase:
-- the lead splits the phase into independent tasks (the "Parallel tasks" listed per phase);
-- it dispatches **one implementer sub-agent per task, in parallel in a single message**, each in its own worktree and with a self-contained brief: files, interfaces, the FP §13 test names, and the exit criteria;
-- each sub-agent works test-first (red, green, commit) and reports back a short result;
-- the lead merges the results, runs the gate, and handles integration and the REPORT.md.
-
-Sequential tasks (those that depend on earlier output) are still run by a sub-agent, one after another. The lead only does work that can't be delegated: cross-task integration, debugging a red gate, and talking to the user.
-
-| Skill | Where | Use |
+| Skill | Phase(s) | Use |
 |---|---|---|
-| subagent-driven-development, dispatching-parallel-agents | Every phase | The build model above |
-| test-driven-development | Inside every implementer sub-agent | Red → green → commit, using FP §13's named tests |
+| writing-plans | 0 | Plan copied to `docs/superpowers/plans/`; task format for any sub-plan |
+| writing-for-agents | 0, plus any phase that adds a directory | Authoring every CLAUDE.md |
+| research | 0 | `docs/research/model-ids.md` and `docs/research/sdk-versions.md` (see 0.1) |
+| fewer-permission-prompts, update-config | 0 | `.claude/settings.json` allowlist |
+| using-git-worktrees, finishing-a-development-branch | Every phase | One branch `phase/NN-slug` per phase |
+| subagent-driven-development | Every phase | One implementer subagent per task, each followed by a review |
+| dispatching-parallel-agents | 3, 4, 5, 7, 9, 10, 11 | Independent tasks inside a phase (listed per phase). Each merges into the phase branch only when green, in FP §12.3 order. |
+| test-driven-development | Every task, inside each implementer sub-agent | Red, green, commit, using FP §13's named tests |
+| systematic-debugging | Any red test or failed gate | Find the root cause before fixing |
 | verification-before-completion | Every gate | Read the actual output before claiming green |
-| code-review | Every gate | One reviewer sub-agent on the phase diff; fixes applied before close-out |
-| systematic-debugging | Only on a red test or failed gate | Root cause before fix |
-| writing-for-agents | 0.9 only | Authoring the CLAUDE.md files |
-| frontend-design, shadcn | 3, 7 (and 9–11 pages) | UI tokens and components |
+| requesting-code-review, code-review, receiving-code-review | Every gate | Standards and spec review of the phase diff |
+| codebase-design | 1, 4 | Port seams: `Bus`, `Store`, `Clock`, `DataSource`, `Embedder`, `Executor`, SDK `ModelProvider` |
+| frontend-design, shadcn | 3, 7, 9-11 | Visual direction, components and tokens |
+| vercel-react-best-practices | 3, 7+ | Server/client split, the SSE hook, avoiding request waterfalls |
+| web-design-guidelines | 7 gate | UI audit (status colour always comes with an icon and a text label, FP §10) |
+
+Additional skills the user confirmed (2026-10-20), used at the phases shown:
+
+| Skill | Phase(s) | Use |
+|---|---|---|
 | dataviz | 2, 3, 5 | Evidence plots |
 | claude-in-chrome | 7, 12 | Exploratory QA, GIFs and GCP console screenshots |
 | security-review | 8b or 12 (once, on the deployed surface), and before enabling AUTO security in 9 | Public surface and IAM |
 | slides | 13 | The 7-minute deck from FP §14 |
 
-**Dropped from v2** to save time: research as a skill (0.1 is one sub-agent doing web research), writing-plans, fewer-permission-prompts and update-config (0.10 is a hand-written settings file), using-git-worktrees and finishing-a-development-branch (plain `git worktree` and `gh pr create`), codebase-design, vercel-react-best-practices, web-design-guidelines (the gate's axe check covers accessibility), run, simplify, create-pr-description (a plain PR body), requesting- and receiving-code-review (folded into code-review).
-
-**Never used:** deploy-to-vercel and vercel-cli (FP: Cloud Run); claude-api (the providers are OpenAI and Vertex Gemini); ui-styling, ui-ux-pro-max and motion-framer; the 3D and animation skills.
+Only the skills the user flagged as irrelevant and time-consuming stay out: run, simplify, create-pr-description (use a plain `gh pr create` body), ui-styling, ui-ux-pro-max, motion-framer, deploy-to-vercel, vercel-cli, claude-api and the 3D and animation skills.
 
 ---
 
