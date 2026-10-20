@@ -1,0 +1,23 @@
+{
+  "rows": 500,
+  "incidents": 28,
+  "band_mismatches": 0,
+  "B0": {
+    "rule": "u >= 1.0",
+    "alerts": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 28,
+    "precision": 0.0,
+    "recall": 0.0
+  },
+  "B1": {
+    "rule": "u >= 0.95",
+    "alerts": 50,
+    "tp": 28,
+    "fp": 22,
+    "fn": 0,
+    "precision": 0.56,
+    "recall": 1.0
+  }
+}

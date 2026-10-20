@@ -1,0 +1,58 @@
+# NovaPay service catalogue (FINAL_PLAN §3.1). IDs are the PS-02 CSV service names so the CSV replays natively.
+# depends_on = upstream dependencies (this service calls them). Blast radius flows to dependants.
+services:
+  PaymentGateway:
+    display: PaymentGateway (wallet, IBFT, Raast, card)
+    team: Payments
+    tier: 0
+    depends_on: [AuthService, DataPipeline, NotificationHub]
+    segments: {bank: [BANK_A, BANK_B, BANK_C, BANK_D, BANK_E]}
+  AuthService:
+    display: AuthService (login, sessions, device)
+    team: Identity & Security
+    tier: 0
+    depends_on: [UserProfileService]
+  NotificationHub:
+    display: OTP & NotificationHub
+    team: Digital Channels
+    tier: 0
+    depends_on: []
+    segments: {provider: [P1, P2]}
+  DataPipeline:
+    display: LedgerSync / Settlement (cut-off 16:00 PKT)
+    team: Core Banking Ops
+    tier: 0
+    depends_on: []
+  UserProfileService:
+    display: CustomerProfile / KYC
+    team: Onboarding
+    tier: 1
+    depends_on: []
+  SearchAPI:
+    display: TransactionSearchAPI
+    team: Digital Channels
+    tier: 1
+    # CustomerProfile edge added (audit): links the 08-16 SearchAPI → UserProfileService cascade.
+    depends_on: [DataPipeline, UserProfileService]
+  AnalyticsDashboard:
+    display: FraudRiskAnalytics
+    team: Risk & Compliance
+    tier: 1
+    depends_on: [DataPipeline]
+  ReportGenerator:
+    display: RegulatoryReporting
+    team: Risk & Compliance
+    tier: 2
+    depends_on: [DataPipeline]
+
+# The 7 PS-02 metrics are on every service and are higher-is-bad. Thresholds per series come from the data.
+infra_metrics: [cpu_usage, memory_usage, disk_io, connection_pool, queue_depth, latency_p99, error_rate]
+
+# Segment rate metrics carry counts (n_total, n_bad).
+rate_metrics:
+  payment_success_rate: {service: PaymentGateway, segment: bank, direction: lower_bad, slo: 0.97}
+  issuer_timeout_rate: {service: PaymentGateway, segment: bank, direction: higher_bad, slo: 0.02}
+  otp_delivery_rate: {service: NotificationHub, segment: provider, direction: lower_bad, slo: 0.95}
+  login_failure_rate: {service: AuthService, segment: null, direction: higher_bad, slo: 0.08}
+
+bands: {warning: 0.75, critical: 0.95}

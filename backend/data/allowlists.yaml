@@ -1,0 +1,5 @@
+# Sources that the Security Sentinel must never throttle (fictional ranges).
+throttle_allowlist:
+  - {cidr: 10.0.0.0/8, note: internal}
+  - {cidr: 203.0.113.0/24, note: "NovaPay corporate NAT (TEST-NET-3)"}
+  - {cidr: 198.51.100.10/32, note: "Synthetic health checker (TEST-NET-2)"}
