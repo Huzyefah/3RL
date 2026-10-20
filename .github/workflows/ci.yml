@@ -21,7 +21,8 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pyright
       - run: uv run pytest -m unit --disable-socket --allow-unix-socket
-      - run: uv run pytest -m "integration or e2e_http"
+      # exit code 5 = no tests collected yet (early phases); that is not a failure.
+      - run: uv run pytest -m "integration or e2e_http" || [ $? -eq 5 ]
   frontend:
     runs-on: ubuntu-latest
     steps:
