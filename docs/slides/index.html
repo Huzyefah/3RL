@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sentinel for NovaPay</title>
+<style>
+:root{--bg:#0b1220;--fg:#e8edf7;--mut:#93a1b8;--acc:#4cc9a6;--bad:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:20px/1.5 system-ui,sans-serif;overflow:hidden}
+.s{display:none;position:absolute;inset:0;padding:6vh 8vw;flex-direction:column;justify-content:center}.s.on{display:flex}
+h1{font-size:3em;margin:0 0 .3em}h2{font-size:2.2em;margin:0 0 .5em;color:var(--acc)}li{margin:.4em 0}.mut{color:var(--mut)}
+.big{font-size:4.5em;font-weight:700}.bad{color:var(--bad)}.row{display:flex;gap:4vw;flex-wrap:wrap}.card{border:1px solid #2a3753;border-radius:12px;padding:1em 1.4em}
+#n{position:fixed;right:20px;bottom:12px;color:var(--mut);font-size:14px}
+</style></head><body>
+<section class="s on"><h1>Sentinel for NovaPay</h1><p>Agentic AIOps for digital payments (PS-02)</p><p class="mut">Predict, argue, explain, act safely. &lt;team name / members&gt;</p></section>
+<section class="s"><h2>The problem</h2><ul><li>A failing payment costs customers minutes; outages last far longer.</li><li>Alerting is either blind or noisy.</li><li>Single-row thresholds carry no context.</li></ul></section>
+<section class="s"><h2>The numbers (PS-02 CSV)</h2><div class="row"><div class="card"><div class="big bad">0 / 28</div>static threshold</div><div class="card"><div class="big">28 / 28</div>95% rule</div><div class="card"><div class="big">0.56</div>precision</div><div class="card"><div class="big bad">44%</div>false pages</div></div></section>
+<section class="s"><h2>Solution flow</h2><p>Replay / sim -> Detector -> Grouping -> Agents (Skeptic, Commander) -> Policy Guard -> Actions -> Verify</p><p class="mut">Detector: Holt ETA, EWMA, binomial segment tests. No LLM in detection.</p></section>
+<section class="s"><h2>Agents</h2><ul><li><b>Commander</b>: plans, uses data tools, writes grounded RCA, proposes action, verifies outcome.</li><li><b>Skeptic</b>: argues the alert is a false alarm using calendar, topology and cascades.</li><li>OpenAI-backed, with a deterministic fallback.</li></ul></section>
+<section class="s"><h2>Safe autonomy</h2><ul><li>Policy Guard: allow, require approval, or deny.</li><li>Reroute needs approval and a healthy target; audited and reversible.</li><li>Ledger and limit changes are denied outright.</li></ul></section>
+<section class="s"><h2>Live demo</h2><ul><li>08-01 cascade replay</li><li>Salary-day false alarm suppressed</li><li>Break BANK_C, approve reroute, recovery verified</li></ul></section>
+<section class="s"><h2>Scorecard</h2><p>See live scorecard.</p><p class="mut">Computed from the CSV on held-out data, never hard-coded.</p></section>
+<section class="s"><h2>Architecture</h2><p>Single-process locally; GCP target: Pub/Sub, Cloud Run, BigQuery, Secret Manager, Cloud Scheduler. OpenAI only.</p><p class="mut">Implemented: detector, agents, policy-gated reroute, scorecard, UI. Planned: GCP deployment, Pub/Sub/BigQuery adapters, Security Sentinel, Log Analyst.</p></section>
+<section class="s"><h2>Scale and business</h2><ul><li>Agents run only on grouped candidates, so cost tracks incidents, not events.</li><li>Detection partitions by service.</li><li>SaaS priced per monitored service for wallets, PSPs and banks.</li></ul></section>
+<section class="s"><h2>The ask</h2><ul><li>Pilot with a wallet or PSP.</li><li>Access to real telemetry to calibrate.</li></ul><p class="mut">PS-02 rows are real; densified data is labelled synthetic replay. NovaPay is fictional.</p></section>
+<div id="n"></div>
+<script>
+var s=document.querySelectorAll('.s'),i=0;function g(k){s[i].classList.remove('on');i=Math.max(0,Math.min(s.length-1,k));s[i].classList.add('on');document.getElementById('n').textContent=(i+1)+' / '+s.length}
+document.addEventListener('keydown',function(e){if(['ArrowRight','PageDown',' '].includes(e.key))g(i+1);if(['ArrowLeft','PageUp'].includes(e.key))g(i-1)});
+document.addEventListener('click',function(){g(i+1)});g(0);
+</script></body></html>
