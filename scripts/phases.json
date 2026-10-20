@@ -10,7 +10,7 @@
   "08":  {"slug": "p0-freeze", "evidence_flows": ["compose-stack", "pubsub-redelivery-dedupe", "sse-reconnect", "live-cascade-replan", "live-reroute", "final-scorecard", "cost-per-incident"]},
   "08b": {"slug": "p0-cloudrun", "evidence_flows": ["gcp-p0-services", "gcp-13a", "gcp-13c", "gcp-13d"]},
   "09":  {"slug": "p1-autonomy-logs", "evidence_flows": ["cred-stuffing-shadow", "cred-stuffing-enforce-ttl-rollback", "kill-switch-blocks-auto", "cert-expiry-log-detection"]},
-  "10":  {"slug": "p1-breadth", "evidence_flows": ["seeded-calibration", "scorecard-seeded-breadth", "feedback-raises-tau", "scale-action-approve", "rollback-restart", "data-card", "fallback-chain-vertex-fake"]},
+  "10":  {"slug": "p1-breadth", "evidence_flows": ["seeded-calibration", "scorecard-seeded-breadth", "feedback-raises-tau", "scale-action-approve", "rollback-restart", "data-card", "fallback-chain-openai-template"]},
   "11":  {"slug": "p2", "evidence_flows": ["followup-escalation", "close-ticket", "step-up-mfa", "analytics-page", "platform-ops-page", "webhook-connector"]},
   "12":  {"slug": "gcp", "evidence_flows": ["gcp-services", "gcp-ps02-cascade-replan", "gcp-bank-c-reroute-recovery", "gcp-fallback-key-revoked", "gcp-cred-stuffing", "gcp-scale-real", "gcp-scorecard-final"]},
   "13":  {"slug": "submission", "evidence_flows": ["submission-checklist", "demo-rehearsal"]}

@@ -30,7 +30,7 @@ Python runs through `uv run` only. Phase slugs and each phase's required evidenc
 ## Hard rules
 
 1. Never type a scorecard number by hand; only `run_eval.py` produces them.
-2. Model IDs live only in env vars; never use `gemini-2.5-*`.
+2. Model IDs live only in env vars. OpenAI models only: no Vertex or Gemini calls.
 3. No PII in prompts (a test pins the `03\d{9}` pattern).
 4. Test-split incidents never enter memory during evaluation; `recall_similar` never returns the future or the incident itself.
 5. The scripted LLM is test-only and always shows its UI badge.

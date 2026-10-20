@@ -11,7 +11,7 @@
 - Frontend: Next.js 16, TypeScript, Tailwind and shadcn/ui.
 - Tests: Playwright with axe-core.
 - Local stack: Docker Compose with the Pub/Sub emulator and the BigQuery emulator.
-- GCP (asia-south1): Cloud Run, Pub/Sub, BigQuery, Secret Manager, Cloud Scheduler, Vertex AI and Cloud Monitoring, plus a Google Chat webhook.
+- GCP (asia-south1): Cloud Run, Pub/Sub, BigQuery, Secret Manager, Cloud Scheduler and Cloud Monitoring, plus a Google Chat webhook.
 
 ---
 
@@ -72,6 +72,7 @@ The repo has only planning docs and the PS-02 CSV. FP merges two competing plans
 | D11 | **The FakeLLM and the scripted LLM are SDK `Model` implementations** (`FakeModel`, `ScriptedModel`), supplied through `ModelProvider` in `RunConfig`. They emit real function-call items, so the SDK's tool loop runs exactly as in production. | Tests then cover the real orchestration, not a parallel port. |
 | D12 | **RCA quality is P0:**<br>• top-1/top-3 code accuracy, root-service accuracy, groundedness % and Skeptic-induced misses are reported in Phase 8;<br>• the LLM judge and routing accuracy are P1. | FP §2 lists RCA quality as P0. |
 | D13 | **Merging a phase PR into the shared `main` is outward-facing.** The gate opens the PR with `gh pr create`. Merging needs the user's go-ahead, unless they grant standing approval at the start of execution. | — |
+| D15 | **OpenAI models only for every LLM use** (user instruction, 2026-10-20). No Vertex AI or Gemini. The fallback chain is OpenAI → deterministic template. The RCA judge is an OpenAI model of a different generation than the generators (`OPENAI_JUDGE_MODEL`), which replaces FP's "different model family" judge. This overrides FP §4.1, §7.2 I7 and §9 where they name Vertex Gemini. | User instruction. |
 | D14 | **The user approves each phase transition.** After every phase gate (protocol step 8), ask whether to continue to the next phase, and wait for the answer. Instruction given by the user on 2026-10-20. | Keeps the user in control of a long build. |
 
 ### Timer table (enforced through `Clock`; test `test_timer_clock_assignment`)
@@ -210,7 +211,6 @@ docs/  FINAL_PLAN.md  superpowers/plans/…  research/  ARCHITECTURE.md  DATA_CA
 ### LLM modes (`LLM_PROVIDER`)
 
 - `openai`: real calls.
-- `vertex`: Gemini on Vertex (P1).
 - `scripted`: `ScriptedModel` replays fixture responses keyed by incident fingerprint. Used for integration, E2E and CI.
 - `fake`: unit tests only.
 
@@ -278,7 +278,7 @@ Commit: <sha> · Date: <iso> · Branch: phase/NN-<slug> · Tag: phase-NN · PR: 
 - [ ] **0.1** Copy this plan to `docs/superpowers/plans/2026-10-20-sentinel-implementation.md`. Dispatch one research sub-agent (web, primary sources) to produce:
   - `docs/research/model-ids.md`, covering:
     - OpenAI fast, smart and embedding IDs as of today;
-    - which Vertex Gemini IDs are served in asia-south1, and whether the `global` endpoint is needed (never `gemini-2.5-*`);
+    - (Vertex/Gemini research was done but is no longer used, see D15);
     - whether BQML `AI.DETECT_ANOMALIES` and `ARIMA_PLUS` are available in asia-south1.
   - `docs/research/sdk-versions.md`, covering:
     - the `openai-agents` version on PyPI today: `Agent.as_tool`, `output_type`, `AgentOutputSchema(strict_json_schema=False)`, `ModelProvider`/`Model`, `RunHooks`, `MaxTurnsExceeded`, and how to disable tracing;
@@ -314,7 +314,7 @@ Commit: <sha> · Date: <iso> · Branch: phase/NN-<slug> · Tag: phase-NN · PR: 
   - `test-evidence/README.md`;
   - `.github/workflows/ci.yml`: lint, types, unit, integration, and Playwright with `LLM_PROVIDER=scripted`.
 - [ ] **0.8** Rewrite `.env.example` so every variable is documented and no secret is included:
-  - LLM: `OPENAI_API_KEY`, `OPENAI_{FAST,SMART,EMBED}_MODEL`, `LLM_PROVIDER`, `VERTEX_MODEL`, `VERTEX_LOCATION`;
+  - LLM: `OPENAI_API_KEY`, `OPENAI_{FAST,SMART,EMBED}_MODEL`, `OPENAI_JUDGE_MODEL`, `LLM_PROVIDER`;
   - GCP: `GCP_PROJECT`, `GCP_REGION=asia-south1`;
   - infrastructure: `BUS=memory|pubsub`, `STORE=memory|bigquery`, `CHAT_WEBHOOK_URL`;
   - policy and demo: `SECURITY_AUTONOMY=shadow`, `KILL_SWITCH=0`, `DEMO_CONTROLS`, `DEMO_PASSCODE`;
@@ -330,7 +330,7 @@ Commit: <sha> · Date: <iso> · Branch: phase/NN-<slug> · Tag: phase-NN · PR: 
     
     **Hard rules:**
     1. Never type a scorecard number by hand; only `run_eval.py` produces them.
-    2. Model IDs live only in env vars; never use `gemini-2.5-*`.
+    2. Model IDs live only in env vars. OpenAI models only (D15): no Vertex or Gemini calls anywhere.
     3. No PII in prompts (the test pins the `03\d{9}` pattern).
     4. Test-split incidents never enter memory during evaluation, and `recall_similar` never returns the future or the incident itself.
     5. The scripted LLM is test-only and always shows its badge.
@@ -779,9 +779,9 @@ Then run the 13a–d specs as `@gcp` against the `sentinel-web` URL, and run sec
 - Skeptic-induced misses on the surge-overlap episodes.
 
 **10B: judge and fallback chain**
-- `VertexClient` (google-genai, `VERTEX_LOCATION` taken from the research in 0.1), used as the judge and as the second link in the fallback chain: OpenAI → Vertex → template.
+- The judge is an OpenAI model from a different generation than the generators (`OPENAI_JUDGE_MODEL`, default `gpt-5.5`), and the fallback chain is OpenAI → template (D15). A fake judge client is used in unit tests.
 - `rca_eval` adds the judge mean and routing accuracy.
-- Tested locally with a fake. Live judge scores come from Phase 12, and until then the row reads "pending GCP".
+- Tested locally with a fake. Live judge scores are produced with the real key as soon as it is available, so no GCP dependency remains for this row.
 
 **10C: feedback loop**
 - 👍/👎 adjusts τ (+0.05 per 👎, capped at +0.15, with a 24 h half-life on the wall clock).
@@ -799,7 +799,7 @@ Then run the 13a–d specs as `@gcp` against the `sentinel-web` URL, and run sec
 - `test_feedback_tau_cap_and_decay`;
 - `test_fallback_chain_order`.
 
-**Evidence flows:** `seeded-calibration`, `scorecard-seeded-breadth`, `feedback-raises-tau`, `scale-action-approve`, `rollback-restart`, `data-card`, `fallback-chain-vertex-fake`.
+**Evidence flows:** `seeded-calibration`, `scorecard-seeded-breadth`, `feedback-raises-tau`, `scale-action-approve`, `rollback-restart`, `data-card`, `fallback-chain-openai-template`.
 
 ## Phase 11: P2 extensions (FP §12.3 item 7) · about 90 min
 
@@ -827,14 +827,13 @@ Then run the 13a–d specs as `@gcp` against the `sentinel-web` URL, and run sec
 - [ ] **12.1** Complete the work from 8b if it was skipped. Then run `bootstrap.sh` and `deploy.sh` for the P1 and P2 units:
   - Cloud Scheduler `/jobs/tick` with OIDC;
   - the webhook Cloud Function (2nd gen);
-  - Vertex AI;
   - the Cloud Monitoring connector (the sim's request count and latency, plus the Pub/Sub backlog);
   - the `CloudRunScaler` service account, scoped to `finpay-sim` only.
 - [ ] **12.2** Switch on the live adapters:
   - `BigQueryStore` write-through;
   - the `VECTOR_SEARCH` memory backend;
   - the `CloudRunScaler`;
-  - the Vertex judge;
+  - the live OpenAI judge;
   - the BigQuery ML row.
 
   The "pending GCP" scorecard rows are now filled by `run_eval.py`.
