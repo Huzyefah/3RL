@@ -1,4 +1,5 @@
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +30,7 @@ def _ces(**kw: Any) -> CES:
 @pytest.mark.unit
 def test_schema_snapshot() -> None:
     expected = json.loads(SNAPSHOT.read_text())
-    actual = json.loads(json.dumps(schemas.schema_snapshot()))
+    actual = schemas.normalise_schema(json.loads(json.dumps(schemas.schema_snapshot())))
     assert actual == expected, (
         "Schema changed. If deliberate: uv run python -m sentinel.schemas --write-snapshot "
         "and note it in REPORT.md."
@@ -47,25 +48,67 @@ def test_snapshot_covers_all_public_models() -> None:
         assert required in names
 
 
-def _open_objects(node: Any, path: str = "$") -> list[str]:
-    """Paths of object schemas that are free-form (no properties) or allow extra keys."""
-    bad: list[str] = []
+def _walk(node: Any, path: str = "$") -> Iterator[tuple[str, dict[str, Any]]]:
     if isinstance(node, dict):
-        if node.get("type") == "object" and "properties" not in node:
-            bad.append(path)
-        if node.get("type") == "object" and node.get("additionalProperties") is not False:
-            bad.append(path + " (additionalProperties)")
-        for k, v in node.items():
-            bad += _open_objects(v, f"{path}.{k}")
+        yield path, node  # pyright: ignore[reportUnknownVariableType]
+        for k, v in node.items():  # pyright: ignore[reportUnknownVariableType]
+            yield from _walk(v, f"{path}.{k}")
     elif isinstance(node, list):
-        for i, v in enumerate(node):
-            bad += _open_objects(v, f"{path}[{i}]")
-    return bad
+        for i, v in enumerate(node):  # pyright: ignore[reportUnknownVariableType]
+            yield from _walk(v, f"{path}[{i}]")
 
 
 @pytest.mark.unit
 def test_rca_schema_is_strict_compatible() -> None:
-    assert _open_objects(RCA.model_json_schema()) == []
+    schema = RCA.model_json_schema()
+    problems: list[str] = []
+    n_objects = 0
+    for path, node in _walk(schema):
+        if node.get("type") == "object" or "properties" in node:
+            n_objects += 1
+            props = set(node.get("properties", {}))
+            if not props:
+                problems.append(f"{path}: free-form object")
+            if props != set(node.get("required", [])):
+                problems.append(f"{path}: required != properties")
+            if node.get("additionalProperties") is not False:
+                problems.append(f"{path}: additionalProperties not false")
+        if "default" in node and path.split(".")[-1] != "properties":
+            problems.append(f"{path}: has default")
+        if "$ref" in node and set(node) != {"$ref"}:
+            problems.append(f"{path}: $ref with siblings {sorted(set(node) - {'$ref'})}")
+    assert n_objects > 5
+    assert problems == []
+
+
+@pytest.mark.unit
+def test_rca_schema_accepted_by_openai_sdk() -> None:
+    from openai.lib._parsing import type_to_response_format_param
+    from openai.lib._pydantic import to_strict_json_schema
+
+    to_strict_json_schema(RCA)
+    fmt: Any = type_to_response_format_param(RCA)
+    assert fmt["type"] == "json_schema"
+
+
+@pytest.mark.unit
+def test_action_params_nullable_but_constructible_without_args() -> None:
+    p = ActionParams()
+    assert p.bank is None
+    assert ActionParams.model_validate({"bank": "BANK_C"}).rail is None
+    assert ActionRequest(incident_id="i", type="escalate").params == ActionParams()
+
+
+@pytest.mark.unit
+def test_policy_actions_are_valid_action_types() -> None:
+    from typing import get_args
+
+    from sentinel.policy_config import load_policies
+
+    p = load_policies()
+    named = {*p.auto, *p.forbidden, *p.hitl.model_dump(), "throttle_source", "step_up_mfa"}
+    named |= {"page_oncall", "notify_channel", "schedule_recheck"}
+    assert named <= set(get_args(schemas.ActionType))
 
 
 @pytest.mark.unit

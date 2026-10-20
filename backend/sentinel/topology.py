@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict
+
+from sentinel.utilisation import Direction
 
 DEFAULT_PATH = Path(__file__).resolve().parents[1] / "data" / "services.yaml"
 
@@ -14,7 +15,7 @@ DEFAULT_PATH = Path(__file__).resolve().parents[1] / "data" / "services.yaml"
 class MetricSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
     threshold: float
-    direction: Literal["higher_is_bad", "lower_is_bad"]
+    direction: Direction
 
 
 class Service(BaseModel):

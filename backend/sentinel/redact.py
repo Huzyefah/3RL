@@ -4,8 +4,13 @@
 * PAN: 13-19 digits (spaces/dashes allowed) that pass the Luhn check -> ``****-****-****-1234``
 * CNIC ``#####-#######-#`` -> ``*****-*******-#``
 
-Digit strings that fail Luhn are not treated as PANs. The MSISDN rule has no digit
-boundaries on purpose, so ``03\\d{9}`` can never survive inside a longer digit run.
+Digit strings that fail Luhn are not treated as PANs.
+
+Boundary tradeoff: the bare ``03...`` and ``92 3...`` MSISDN forms and the PAN rule require
+that the match is not glued to a preceding digit (the PAN rule also not to a preceding
+``.``), so ids, epoch-ms values and float decimals are left alone. The guarantee is
+therefore that no *standalone* ``03\\d{9}`` survives; one embedded in a longer digit run is
+not masked. The ``+92`` and ``0092`` forms carry their own prefix and need no boundary.
 """
 
 from __future__ import annotations
@@ -13,8 +18,8 @@ from __future__ import annotations
 import re
 
 _CNIC = re.compile(r"(?<!\d)\d{5}-\d{7}-(\d)(?!\d)")
-_PAN = re.compile(r"(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)")
-_MSISDN = re.compile(r"(?:\+92[ -]?|0092[ -]?|0)3(\d{2})[ -]?(\d{4})(\d{3})")
+_PAN = re.compile(r"(?<![\d.])\d(?:[ -]?\d){12,18}(?!\d)")
+_MSISDN = re.compile(r"(?:\+92[ -]?|0092[ -]?|(?<!\d)92[ -]?|(?<!\d)0)3(\d{2})[ -]?(\d{4})(\d{3})")
 
 
 def _luhn_ok(digits: str) -> bool:

@@ -7,7 +7,10 @@ With an ``EventClock`` the caller advances the clock and ticks; with a ``WallClo
 
 Keys are idempotent: scheduling an existing key replaces the old job. A job is removed
 before its handler runs, so a handler may reschedule its own key (it fires on a later
-tick). A failing handler is recorded in ``errors`` and never stops the tick or the loop.
+tick). A failing handler is recorded in ``errors`` and never stops the tick or the loop. If a
+handler is cancelled (``CancelledError``) its job is put back (unless the handler already
+rescheduled that key) so the job is not lost, and the cancellation propagates.
+Datetimes must be timezone-aware.
 """
 
 from __future__ import annotations
@@ -34,6 +37,8 @@ class Scheduler:
         self.errors: list[tuple[str, Exception]] = []
 
     def schedule(self, at: datetime, key: str, handler: Handler) -> None:
+        if at.tzinfo is None or at.utcoffset() is None:
+            raise ValueError(f"schedule time must be timezone-aware: {at!r}")
         self._jobs[key] = (at, next(self._seq), handler)
 
     def cancel(self, key: str) -> bool:
@@ -59,6 +64,11 @@ class Scheduler:
                 result = job[2]()
                 if inspect.isawaitable(result):
                     await result
+            except asyncio.CancelledError:
+                self._jobs.setdefault(key, job)  # keep the job; it was never completed
+                if key in fired:
+                    fired.remove(key)
+                raise
             except Exception as exc:
                 log.exception("scheduled job %s failed", key)
                 self.errors.append((key, exc))

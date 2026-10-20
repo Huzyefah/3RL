@@ -23,6 +23,11 @@ class Clock(Protocol):
     def now(self) -> datetime: ...
 
 
+def _require_aware(ts: datetime) -> None:
+    if ts.tzinfo is None or ts.utcoffset() is None:
+        raise ValueError(f"timestamp must be timezone-aware: {ts!r}")
+
+
 class WallClock:
     """Real time, timezone-aware UTC."""
 
@@ -34,11 +39,13 @@ class EventClock:
     """Time that moves only when a replayed event says so.
 
     Monotonic: ``advance_to`` raises ``ValueError`` for a timestamp earlier than the
-    current time (equal is allowed). ``now()`` raises ``LookupError`` until the first
-    event, so a timer can never be armed against an unknown time.
+    current time (equal is allowed) or a naive (tz-less) timestamp. ``now()`` raises
+    ``LookupError`` until the first event, so a timer can never be armed against an unknown time.
     """
 
     def __init__(self, start: datetime | None = None) -> None:
+        if start is not None:
+            _require_aware(start)
         self._now = start
 
     def now(self) -> datetime:
@@ -47,6 +54,7 @@ class EventClock:
         return self._now
 
     def advance_to(self, ts: datetime) -> None:
+        _require_aware(ts)
         if self._now is not None and ts < self._now:
             raise ValueError(f"EventClock cannot go backwards: {ts} < {self._now}")
         self._now = ts

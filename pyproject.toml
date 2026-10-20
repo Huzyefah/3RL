@@ -24,6 +24,7 @@ dev = [
   "httpx",
   "pandas",
   "matplotlib>=3.11.2",
+  "openai>=3.35.1",
 ]
 
 [tool.pytest.ini_options]

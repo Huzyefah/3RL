@@ -6,7 +6,7 @@ from hypothesis import strategies as st
 
 from sentinel.redact import contains_pii, redact
 
-MSISDN = re.compile(r"03\d{9}")
+MSISDN = re.compile(r"(?<!\d)03\d{9}")
 
 
 @pytest.mark.unit
@@ -43,4 +43,45 @@ def test_redact_leaves_no_msisdn(text: str):
 @pytest.mark.unit
 @given(st.text(max_size=40), st.from_regex(r"03\d{9}", fullmatch=True), st.text(max_size=40))
 def test_redact_embedded_msisdn_never_survives(a: str, m: str, b: str):
-    assert not MSISDN.search(redact(a + m + b))
+    assert not MSISDN.search(redact(a + " " + m + b))
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "text",
+    [
+        "at 2026-10-20T10:15:30Z ok",
+        "2026-10-20 10:15:30.123456+05:00",
+        "ts 1789900000000",
+        "id 1020030123456789",
+        "score 0.9503012345678",
+        "value 12345.0382",
+        "evidence segment:3fa1c2d9",
+        "INC-2026-1020-004",
+        "INC-0007",
+        "num 1234567890123",
+        "num 4111111111112",
+    ],
+)
+def test_redact_leaves_non_pii_untouched(text: str):
+    assert redact(text) == text
+    assert not contains_pii(text)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("0300-1234567", "03xx-xxxx567"),
+        ("+92 300 1234567", "03xx-xxxx567"),
+        ("92 300 1234567", "03xx-xxxx567"),
+        ("923001234567", "03xx-xxxx567"),
+        ("call 0092-300-1234567.", "call 03xx-xxxx567."),
+        ("pan 4111-1111-1111-1111", "pan ****-****-****-1111"),
+        ("pan 4111 1111 1111 1111", "pan ****-****-****-1111"),
+        ("cnic 35202-1234567-1", "cnic *****-*******-1"),
+    ],
+)
+def test_redact_formats(text: str, expected: str):
+    assert redact(text) == expected
+    assert redact(expected) == expected

@@ -3,11 +3,16 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEV_SIM_TOKEN = "dev-sim-token"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
+
+    env: Literal["dev", "test", "staging", "prod"] = "dev"
 
     # LLM (OpenAI only, D15)
     openai_api_key: str = ""
@@ -34,7 +39,7 @@ class Settings(BaseSettings):
 
     # Simulator
     sim_base_url: str = "http://localhost:8081"
-    sim_admin_token: str = "dev-sim-token"
+    sim_admin_token: str = DEV_SIM_TOKEN
     sim_speed: float = 1.0
     emit_mode: Literal["http", "pubsub"] = "http"
 
@@ -43,6 +48,12 @@ class Settings(BaseSettings):
     evidence_phase: str = "phase-00-foundation"
     eval_max_usd: float = 5.0
     pubsub_verify_oidc: bool = False
+
+    @model_validator(mode="after")
+    def _require_real_admin_token_outside_dev(self) -> "Settings":
+        if self.env != "dev" and self.sim_admin_token in ("", DEV_SIM_TOKEN):
+            raise ValueError("SIM_ADMIN_TOKEN must be set to a non-default value when ENV != dev")
+        return self
 
 
 @lru_cache

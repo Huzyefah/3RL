@@ -3,9 +3,12 @@
 Payloads are generic (pydantic models or dicts); the bus knows nothing about schemas.
 
 Backpressure policy: every subscriber has a bounded queue. ``publish`` awaits until
-every subscriber of the topic has room, so a slow consumer slows the publisher instead
-of dropping messages or growing memory. Delivery is ordered per topic. A subscriber
-only sees messages published after it subscribed (no replay).
+every LIVE subscriber of the topic has room, so a slow consumer slows the publisher
+instead of dropping messages or growing memory. A subscriber that closes (``aclose()``
+or leaving ``async with``) stops counting immediately, even while the publisher is
+blocked on it. Delivery is ordered per topic. A subscriber only sees messages published
+after it subscribed (no replay). Use ``async with bus.subscribe(t) as sub`` so a
+consumer that breaks out or is cancelled unsubscribes.
 """
 
 from __future__ import annotations
@@ -40,6 +43,28 @@ class Subscription:
         self._topic = topic
         self.queue: asyncio.Queue[Any] = asyncio.Queue(maxsize)
         self._closed = False
+        self._closed_event = asyncio.Event()
+
+    async def __aenter__(self) -> Subscription:
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        await self.aclose()
+
+    async def _deliver(self, msg: Any) -> None:
+        """Put ``msg``, blocking while full, but give up as soon as we are closed."""
+        if self._closed:
+            return
+        if not self.queue.full():
+            self.queue.put_nowait(msg)
+            return
+        put = asyncio.ensure_future(self.queue.put(msg))
+        closed = asyncio.ensure_future(self._closed_event.wait())
+        try:
+            await asyncio.wait({put, closed}, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            put.cancel()
+            closed.cancel()
 
     def __aiter__(self) -> Subscription:
         return self
@@ -56,10 +81,14 @@ class Subscription:
         if self._closed:
             return
         self._closed = True
+        self._closed_event.set()
         self._bus._remove(self._topic, self)
         while not self.queue.empty():
             self.queue.get_nowait()
-        self.queue.put_nowait(_CLOSED)  # wake a blocked consumer
+        try:
+            self.queue.put_nowait(_CLOSED)  # wake a blocked consumer
+        except asyncio.QueueFull:  # a woken putter refilled it; no consumer is waiting
+            pass
 
 
 class InMemoryBus:
@@ -69,7 +98,7 @@ class InMemoryBus:
 
     async def publish(self, topic: str, msg: Message) -> None:
         for sub in list(self._subs.get(topic, ())):
-            await sub.queue.put(msg)
+            await sub._deliver(msg)
 
     def subscribe(self, topic: str) -> Subscription:
         sub = Subscription(self, topic, self._maxsize)

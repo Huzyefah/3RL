@@ -1,9 +1,11 @@
 import csv
 from pathlib import Path
+from typing import get_args
 
 import pytest
 
 from sentinel.topology import Topology
+from sentinel.utilisation import Direction, utilisation
 
 pytestmark = pytest.mark.unit
 
@@ -98,21 +100,33 @@ def test_segments_and_banks(topo: Topology):
 def test_segment_metric_thresholds(topo: Topology):
     pg = topo.services["PaymentGateway"].segment_metrics
     assert pg["payment_success_rate"].threshold == 0.97
-    assert pg["payment_success_rate"].direction == "lower_is_bad"
+    assert pg["payment_success_rate"].direction == "lower_bad"
     assert pg["issuer_timeout_rate"].threshold == 0.02
-    assert pg["issuer_timeout_rate"].direction == "higher_is_bad"
+    assert pg["issuer_timeout_rate"].direction == "higher_bad"
     nh = topo.services["NotificationHub"].segment_metrics
     assert nh["otp_delivery_rate"].threshold == 0.95
     au = topo.services["AuthService"].segment_metrics
     assert au["login_failure_rate"].threshold == 0.08
 
 
-def test_ps02_metrics_present_and_higher_is_bad(topo: Topology):
+def test_ps02_metrics_present_and_higher_bad(topo: Topology):
     for svc in topo.services.values():
         assert len(svc.metrics) == 7
-        assert all(m.direction == "higher_is_bad" and m.threshold > 0 for m in svc.metrics.values())
+        assert all(m.direction == "higher_bad" and m.threshold > 0 for m in svc.metrics.values())
 
 
 def test_unknown_service_raises(topo: Topology):
     with pytest.raises(KeyError):
         topo.owner("Nope")
+
+
+def test_every_metric_direction_is_valid_and_feeds_utilisation(topo: Topology):
+    valid = set(get_args(Direction))
+    n = 0
+    for svc in topo.services.values():
+        for spec in [*svc.metrics.values(), *svc.segment_metrics.values()]:
+            assert spec.direction in valid
+            u = utilisation(spec.threshold, spec.threshold, spec.direction)
+            assert u == pytest.approx(1.0)  # at the threshold the SLO is exactly breached
+            n += 1
+    assert n > 0

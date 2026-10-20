@@ -120,3 +120,46 @@ async def test_scheduler_run_loop_wall_mode():
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
+
+
+@pytest.mark.unit
+def test_scheduler_rejects_naive_datetime():
+    sched = Scheduler(FrozenClock(T0))
+    with pytest.raises(ValueError):
+        sched.schedule(datetime(2026, 8, 1, 3, 1), "k", lambda: None)
+    assert sched.pending() == []
+
+
+@pytest.mark.unit
+async def test_scheduler_cancelled_handler_keeps_job():
+    import asyncio
+
+    clock = FrozenClock(T0)
+    sched = Scheduler(clock)
+
+    async def hang() -> None:
+        raise asyncio.CancelledError
+
+    sched.schedule(T0 + M, "k", hang)
+    clock.advance(2 * M)
+    with pytest.raises(asyncio.CancelledError):
+        await sched.tick()
+    assert sched.pending() == ["k"]  # re-queued so the job is not lost
+
+
+@pytest.mark.unit
+async def test_scheduler_cancelled_handler_does_not_resurrect_replacement():
+    import asyncio
+
+    clock = FrozenClock(T0)
+    sched = Scheduler(clock)
+
+    async def hang() -> None:
+        sched.schedule(T0 + 9 * M, "k", lambda: None)
+        raise asyncio.CancelledError
+
+    sched.schedule(T0 + M, "k", hang)
+    clock.advance(2 * M)
+    with pytest.raises(asyncio.CancelledError):
+        await sched.tick()
+    assert sched._jobs["k"][0] == T0 + 9 * M

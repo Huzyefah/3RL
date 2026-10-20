@@ -40,3 +40,9 @@ def test_u_rejects_degenerate_threshold() -> None:
 )
 def test_band_edges(u: float, expected: str) -> None:
     assert band(u) == expected
+
+
+@pytest.mark.unit
+def test_unknown_direction_raises() -> None:
+    with pytest.raises(ValueError, match="direction"):
+        utilisation(1.0, 2.0, "higher_is_bad")  # type: ignore[arg-type]

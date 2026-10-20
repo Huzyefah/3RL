@@ -114,3 +114,11 @@ def test_runbooks_exist_for_every_root_cause():
         text = (DATA / "runbooks" / f"{code}.md").read_text()
         assert len(text.splitlines()) <= 25
         assert "Preventive action" in text and "Steps" in text
+
+
+def test_policy_hitl_param_keys_are_strict():
+    raw = yaml.safe_load((DATA / "policies.yaml").read_text())
+    raw["hitl"]["scale_service"] = {"max_instances_capp": 5}
+    with pytest.raises(ValidationError):
+        PolicyConfig.model_validate(raw)
+    assert load_policies().hitl.scale_service.max_instances_cap == 5

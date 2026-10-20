@@ -68,3 +68,16 @@ def test_timer_clock_assignment():
     assert TIMERS["circuit_breaker"].limit == 5
     assert TIMERS["page_limit"].limit == 6
     assert TIMERS["recheck"].limit == 2
+
+
+@pytest.mark.unit
+def test_event_clock_rejects_naive_datetime():
+    clock = EventClock()
+    with pytest.raises(ValueError):
+        clock.advance_to(datetime(2026, 8, 1, 3, 0))
+    with pytest.raises(LookupError):
+        clock.now()
+    clock.advance_to(T0)
+    with pytest.raises(ValueError):
+        clock.advance_to(datetime(2026, 8, 1, 4, 0))
+    assert clock.now() == T0

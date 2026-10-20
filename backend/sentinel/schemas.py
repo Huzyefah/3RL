@@ -27,10 +27,15 @@ RootCauseCode = Literal[
 ]  # fmt: skip
 SkepticVerdict = Literal["CONFIRMED", "DISPUTED", "BENIGN"]
 ActionType = Literal[
-    "create_ticket", "post_chat_card", "page_oncall", "attach_rca", "schedule_recheck",
-    "reroute_bank", "otp_failover", "scale_service", "rollback", "restart",
-    "throttle_source", "step_up_mfa", "close_ticket",
-    "modify_ledger", "delete_data", "block_all_logins", "change_txn_limits",
+    # auto (policies.yaml `auto`)
+    "create_ticket", "notify_channel", "attach_rca_runbook", "page_oncall", "schedule_recheck",
+    "send_reminder", "escalate",
+    # human-in-the-loop (policies.yaml `hitl`, `security`)
+    "reroute_bank", "otp_failover", "scale_service", "restart_service", "rollback_deploy",
+    "disable_feature_flag", "close_ticket", "throttle_source", "step_up_mfa",
+    # forbidden (policies.yaml `forbidden`); requestable only so the guard can DENY them
+    "change_ledger_balances", "delete_data", "block_all_logins", "change_limits",
+    "failover_to_unhealthy_target", "act_on_non_sandbox_target",
 ]  # fmt: skip
 ActionMode = Literal["AUTO", "HITL", "DENY"]
 ActionStatus = Literal[
@@ -48,8 +53,22 @@ class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+def _all_required(schema: dict[str, Any]) -> None:
+    """JSON-schema post-processor: every property required, no ``default`` keys (OpenAI strict)."""
+    props: dict[str, Any] = schema.get("properties", {})
+    for p in props.values():
+        p.pop("default", None)
+    schema["required"] = list(props)
+
+
 class _NullableRequired(_Strict):
-    """Strict-schema model: optional keys may be omitted on input but are always emitted."""
+    """Strict-schema model: optional keys may be omitted on input but are always emitted.
+
+    Python defaults (``None``) keep construction convenient; the generated JSON schema lists
+    every field as required with no defaults.
+    """
+
+    model_config = ConfigDict(extra="forbid", json_schema_extra=_all_required)
 
     @model_validator(mode="before")
     @classmethod
@@ -242,7 +261,7 @@ class RCA(_Strict):
 class ActionRequest(BaseModel):
     incident_id: str
     type: ActionType
-    params: ActionParams = Field(default_factory=ActionParams)
+    params: ActionParams = Field(default_factory=lambda: ActionParams())
     rationale: str = ""
     evidence_ids: list[str] = Field(default_factory=list)
     requested_by: str = "agent"
@@ -358,8 +377,24 @@ PUBLIC_MODELS: tuple[type[BaseModel], ...] = (
 SNAPSHOT_PATH = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "schema_snapshot.json"
 
 
+def normalise_schema(node: Any) -> Any:
+    """Drop pydantic's cosmetic ``title`` strings so version bumps don't break the snapshot.
+
+    Keys are sorted on serialisation; a *property* called ``title`` (dict value) is kept.
+    """
+    if isinstance(node, dict):
+        return {
+            k: normalise_schema(v)
+            for k, v in sorted(node.items())  # pyright: ignore[reportUnknownVariableType]
+            if not (k == "title" and isinstance(v, str))
+        }
+    if isinstance(node, list):
+        return [normalise_schema(v) for v in node]  # pyright: ignore[reportUnknownVariableType]
+    return node
+
+
 def schema_snapshot() -> dict[str, Any]:
-    return {m.__name__: m.model_json_schema() for m in PUBLIC_MODELS}
+    return {m.__name__: normalise_schema(m.model_json_schema()) for m in PUBLIC_MODELS}
 
 
 def _main(argv: list[str]) -> int:

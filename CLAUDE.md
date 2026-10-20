@@ -23,7 +23,7 @@ Python runs through `uv run` only. Phase slugs and each phase's required evidenc
 ## Workflow
 
 - Branch `phase/NN-<slug>`, one phase at a time. A phase is done when `make gate PHASE=NN` is green, the REPORT.md is filled, and the PR is open.
-- **After every phase gate, stop and ask the user whether to continue to the next phase (D14).** Do not create the next branch or touch its files until they say yes. This includes 8b and conditional phases.
+- **Standing approval (D14):** after each phase gate, open its PR stacked on the previous phase's branch and start the next phase without asking. Never merge to `main` (the user approves the stacked chain once). Stop only for destructive or security-sensitive actions.
 - Merging to `main` needs the user's go-ahead (D13).
 - Build model: the lead dispatches one implementer sub-agent per independent task, test-first (red, green, commit). Debug red results with systematic-debugging; verify with verification-before-completion before claiming green.
 

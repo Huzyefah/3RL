@@ -19,9 +19,11 @@ def utilisation(value: float, threshold: float, direction: Direction) -> float:
         if threshold <= 0:
             raise ValueError("higher_bad threshold must be > 0")
         return value / threshold
-    if threshold >= 1:
-        raise ValueError("lower_bad floor must be < 1")
-    return (1.0 - value) / (1.0 - threshold)
+    if direction == "lower_bad":
+        if threshold >= 1:
+            raise ValueError("lower_bad floor must be < 1")
+        return (1.0 - value) / (1.0 - threshold)
+    raise ValueError(f"unknown direction {direction!r}; expected 'higher_bad' or 'lower_bad'")
 
 
 def band(u: float) -> Band:

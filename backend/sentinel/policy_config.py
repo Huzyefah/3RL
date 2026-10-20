@@ -28,14 +28,30 @@ class HealthyTargetAction(_Strict):
     revertible: bool
 
 
+class ScaleService(_Strict):
+    max_instances_cap: int
+
+
+class RollbackDeploy(_Strict):
+    change_event_within_min: int
+
+
+class CloseTicket(_Strict):
+    propose_after_in_band_min: int
+
+
+class NoParams(_Strict):
+    pass
+
+
 class HitlConfig(_Strict):
     reroute_bank: HealthyTargetAction
     otp_failover: HealthyTargetAction
-    scale_service: dict[str, int]
-    restart_service: dict[str, int]
-    rollback_deploy: dict[str, int]
-    disable_feature_flag: dict[str, int]
-    close_ticket: dict[str, int]
+    scale_service: ScaleService
+    restart_service: NoParams
+    rollback_deploy: RollbackDeploy
+    disable_feature_flag: NoParams
+    close_ticket: CloseTicket
 
 
 class Throttle(_Strict):

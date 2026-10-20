@@ -9,6 +9,7 @@ def _clean(monkeypatch: pytest.MonkeyPatch) -> None:
     for k in (
         "LLM_PROVIDER", "SIM_SPEED", "KILL_SWITCH", "DEMO_CONTROLS", "STORE", "BUS",
         "OPENAI_FAST_MODEL", "SECURITY_AUTONOMY", "EVAL_MAX_USD", "GCP_REGION",
+        "ENV", "SIM_ADMIN_TOKEN",
     ):  # fmt: skip
         monkeypatch.delenv(k, raising=False)
     get_settings.cache_clear()
@@ -63,3 +64,27 @@ def test_every_env_example_var_has_a_field() -> None:
         if "=" in line and not line.lstrip().startswith("#")
     }
     assert names <= set(Settings.model_fields)
+
+
+@pytest.mark.unit
+def test_env_defaults_to_dev_with_dev_token() -> None:
+    s = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+    assert s.env == "dev" and s.sim_admin_token == "dev-sim-token"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("token", ["dev-sim-token", ""])
+def test_non_dev_env_rejects_default_or_empty_admin_token(
+    monkeypatch: pytest.MonkeyPatch, token: str
+) -> None:
+    monkeypatch.setenv("ENV", "prod")
+    monkeypatch.setenv("SIM_ADMIN_TOKEN", token)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
+
+
+@pytest.mark.unit
+def test_non_dev_env_accepts_real_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ENV", "prod")
+    monkeypatch.setenv("SIM_ADMIN_TOKEN", "s3cret-value")
+    assert Settings(_env_file=None).sim_admin_token == "s3cret-value"  # pyright: ignore[reportCallIssue]
