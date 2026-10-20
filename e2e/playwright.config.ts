@@ -6,13 +6,13 @@ const mock = process.env.MOCK === "1";
 const local = !process.env.BASE_URL;
 
 const localServers = [
-  { command: "make -C .. dev-api", url: "http://localhost:8080/healthz", reuseExistingServer: true, timeout: 120_000 },
-  { command: "make -C .. dev-sim", url: "http://localhost:8081/healthz", reuseExistingServer: true, timeout: 120_000 },
+  { command: "make -C .. dev-api", url: "http://localhost:8080/health", reuseExistingServer: true, timeout: 120_000 },
+  { command: "make -C .. dev-sim", url: "http://localhost:8081/health", reuseExistingServer: true, timeout: 120_000 },
   { command: "make -C .. dev-web", url: "http://localhost:3000", reuseExistingServer: true, timeout: 180_000 },
 ];
 
 const mockServers = [
-  { command: "node mock-api/server.mjs", url: "http://localhost:8090/healthz", reuseExistingServer: true, timeout: 30_000 },
+  { command: "node mock-api/server.mjs", url: "http://localhost:8090/health", reuseExistingServer: true, timeout: 30_000 },
   {
     command: "npm --prefix ../frontend run dev -- --port 3100",
     url: "http://localhost:3100",
@@ -35,15 +35,5 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     trace: "retain-on-failure",
   },
-<<<<<<< HEAD
-  webServer: local
-    ? [
-        { command: "make -C .. dev-api", url: "http://localhost:8080/health", reuseExistingServer: true, timeout: 120_000 },
-        { command: "make -C .. dev-sim", url: "http://localhost:8081/health", reuseExistingServer: true, timeout: 120_000 },
-        { command: "make -C .. dev-web", url: "http://localhost:3000", reuseExistingServer: true, timeout: 180_000 },
-      ]
-    : undefined,
-=======
   webServer: mock ? mockServers : local ? localServers : undefined,
->>>>>>> phase-02-generator-sim-ui
 });
